@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Entrada Rápida de Estoque - SGE{% endblock %}
+
+{% block extra_css %}
+<style>
+    .quick-entry-container {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .product-search-field {
+        font-size: 1.3rem;
+        padding: 15px;
+        border: 3px solid #28a745;
+        border-radius: 10px;
+    }
+    
+    .quantity-input {
+        font-size: 1.5rem;
+        padding: 15px;
+        text-align: center;
+        border: 2px solid #007bff;
+        border-radius: 10px;
+    }
+    
+    .recent-entries {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .entry-item {
+        padding: 10px;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Coluna Principal - Entrada de Estoque -->
+        <div class="col-md-8">
+            <div class="quick-entry-container">
+                <h2 class="mb-4 text-center">
+                    <i class="fas fa-arrow-down text-success"></i>
+                    Entrada Rápida de Estoque
+                </h2>
+                
+                <form method="post" id="quick-entry-form">
+                    {% csrf_token %}
+                    
+                    <!-- Busca de Produto -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold fs-5">Produto</label>
+                        <div class="position-relative">
+                            {{ form.product_search }}
+                            <div id="product-suggestions" class="position-absolute w-100 bg-white border rounded shadow" style="z-index: 1000; display: none;"></div>
+                        </div>
+                        <small class="text-muted">Digite o código de barras, SKU ou nome do produto</small>
+                    </div>
+                    
+                    <!-- Produto Selecionado -->
+                    <div id="selected-product" class="mb-4" style="display: none;">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <h6 class="card-title mb-1" id="product-name"></h6>
+                                        <small class="text-muted" id="product-details"></small>
+                                        <br>
+                                        <small class="text-info" id="current-stock"></small>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="clearSelectedProduct()">
+                                            <i class="fas fa-times"></i>
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden fields -->
+                    {{ form.product.as_hidden }}
+                    
+                    <!-- Quantidade -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold fs-5">Quantidade Recebida</label>
+                        {{ form.quantity }}
+                    </div>
+                    
+                    <!-- Fornecedor -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Fornecedor</label>
+                        {{ form.supplier }}
+                    </div>
+                    
+                    <!-- Observações -->
+                    <div class="mb-4">
+                        <label class="form-label">Observações</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <!-- Botões -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'inflow_list' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-arrow-left"></i>
+                            Voltar
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg" id="save-btn" disabled>
+                            <i class="fas fa-save"></i>
+                            Registrar Entrada
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Coluna Lateral - Informações -->
+        <div class="col-md-4">
+            <!-- Atalhos -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-keyboard"></i> Atalhos
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <small class="d-block"><kbd>F1</kbd> Focar na busca</small>
+                    <small class="d-block"><kbd>F2</kbd> Focar na quantidade</small>
+                    <small class="d-block"><kbd>F9</kbd> Salvar entrada</small>
+                    <small class="d-block"><kbd>Esc</kbd> Limpar formulário</small>
+                </div>
+            </div>
+            
+            <!-- Entradas Recentes -->
+            <div class="recent-entries">
+                <h6 class="mb-3">
+                    <i class="fas fa-history"></i> Entradas Recentes
+                </h6>
+                <div id="recent-entries-list">
+                    <div class="text-center text-muted py-3">
+                        <small>Nenhuma entrada recente</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedProductId = null;
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEventListeners();
+    initializeKeyboardShortcuts();
+    loadRecentEntries();
+});
+
+// Event listeners
+function initializeEventListeners() {
+    const productSearch = document.getElementById('id_product_search');
+    productSearch.addEventListener('input', debounce(searchProducts, 300));
+    productSearch.addEventListener('keydown', handleProductSearchKeydown);
+    
+    const quantityField = document.getElementById('id_quantity');
+    quantityField.addEventListener('input', validateForm);
+}
+
+// Atalhos de teclado
+function initializeKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F1') {
+            e.preventDefault();
+            document.getElementById('id_product_search').focus();
+        } else if (e.key === 'F2') {
+            e.preventDefault();
+            document.getElementById('id_quantity').focus();
+        } else if (e.key === 'F9') {
+            e.preventDefault();
+            if (!document.getElementById('save-btn').disabled) {
+                document.getElementById('quick-entry-form').submit();
+            }
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            clearForm();
+        }
+    });
+}
+
+// Busca de produtos
+function searchProducts() {
+    const query = document.getElementById('id_product_search').value.trim();
+    if (query.length < 2) {
+        hideProductSuggestions();
+        return;
+    }
+    
+    fetch(`/sales/api/products/?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            showProductSuggestions(data.products);
+        })
+        .catch(error => {
+            console.error('Erro na busca:', error);
+        });
+}
+
+// Exibir sugestões de produtos
+function showProductSuggestions(products) {
+    const container = document.getElementById('product-suggestions');
+    
+    if (products.length === 0) {
+        hideProductSuggestions();
+        return;
+    }
+    
+    let html = '';
+    products.forEach(product => {
+        html += `
+            <div class="suggestion-item p-2 border-bottom" 
+                 style="cursor: pointer;"
+                 onclick="selectProduct(${product.id}, '${product.display_name}', '${product.size} - ${product.color}', ${product.quantity})">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <strong>${product.title}</strong>
+                        <br>
+                        <small class="text-muted">${product.size} - ${product.color}</small>
+                        <br>
+                        <small class="text-info">Estoque atual: ${product.quantity}</small>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted">
+                            ${product.barcode ? 'Código: ' + product.barcode : ''}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    container.style.display = 'block';
+}
+
+// Esconder sugestões
+function hideProductSuggestions() {
+    document.getElementById('product-suggestions').style.display = 'none';
+}
+
+// Selecionar produto
+function selectProduct(productId, productName, productDetails, currentStock) {
+    selectedProductId = productId;
+    
+    // Preencher campos hidden
+    document.getElementById('id_product').value = productId;
+    
+    // Mostrar produto selecionado
+    document.getElementById('product-name').textContent = productName;
+    document.getElementById('product-details').textContent = productDetails;
+    document.getElementById('current-stock').textContent = `Estoque atual: ${currentStock} unidades`;
+    document.getElementById('selected-product').style.display = 'block';
+    
+    // Limpar busca e esconder sugestões
+    document.getElementById('id_product_search').value = '';
+    hideProductSuggestions();
+    
+    // Focar na quantidade
+    document.getElementById('id_quantity').focus();
+    
+    validateForm();
+}
+
+// Limpar produto selecionado
+function clearSelectedProduct() {
+    selectedProductId = null;
+    document.getElementById('id_product').value = '';
+    document.getElementById('selected-product').style.display = 'none';
+    document.getElementById('id_product_search').focus();
+    validateForm();
+}
+
+// Validar formulário
+function validateForm() {
+    const productSelected = selectedProductId !== null;
+    const quantityValid = document.getElementById('id_quantity').value > 0;
+    
+    document.getElementById('save-btn').disabled = !(productSelected && quantityValid);
+}
+
+// Limpar formulário
+function clearForm() {
+    if (confirm('Deseja limpar o formulário?')) {
+        document.getElementById('quick-entry-form').reset();
+        clearSelectedProduct();
+    }
+}
+
+// Carregar entradas recentes
+function loadRecentEntries() {
+    // Aqui você pode fazer uma chamada AJAX para carregar entradas recentes
+    // Por enquanto, deixamos como placeholder
+}
+
+// Tratar teclas na busca de produto
+function handleProductSearchKeydown(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const suggestions = document.querySelectorAll('.suggestion-item');
+        if (suggestions.length > 0) {
+            suggestions[0].click();
+        }
+    }
+}
+
+// Função auxiliar debounce
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Fechar sugestões ao clicar fora
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#id_product_search') && !e.target.closest('#product-suggestions')) {
+        hideProductSuggestions();
+    }
+});
+</script>
+{% endblock %}

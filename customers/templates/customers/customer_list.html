@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Clientes - SGE{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-users text-info"></i>
+        Clientes
+    </h2>
+    <a href="{% url 'customers:customer_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i>
+        Novo Cliente
+    </a>
+</div>
+
+<!-- Busca -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-8">
+                <input type="text" name="search" class="form-control" 
+                       placeholder="Buscar por nome, email ou telefone..." 
+                       value="{{ search }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i>
+                    Buscar
+                </button>
+                {% if search %}
+                <a href="{% url 'customers:customer_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i>
+                    Limpar
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Clientes -->
+<div class="card">
+    <div class="card-body">
+        {% if customers %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Telefone</th>
+                            <th>CPF</th>
+                            <th>Cadastro</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>
+                                <strong>{{ customer.name }}</strong>
+                                {% if not customer.is_active %}
+                                    <span class="badge bg-secondary ms-2">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ customer.email|default:"-" }}</td>
+                            <td>{{ customer.phone|default:"-" }}</td>
+                            <td>{{ customer.cpf|default:"-" }}</td>
+                            <td>{{ customer.created_at|date:"d/m/Y" }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'customers:customer_detail' customer.pk %}" 
+                                       class="btn btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'customers:customer_update' customer.pk %}" 
+                                       class="btn btn-outline-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-users fa-3x mb-3"></i>
+                <h5>Nenhum cliente encontrado</h5>
+                {% if search %}
+                    <p>Não foram encontrados clientes com os termos "{{ search }}".</p>
+                    <a href="{% url 'customers:customer_list' %}" class="btn btn-outline-secondary">
+                        Ver todos os clientes
+                    </a>
+                {% else %}
+                    <p>Comece cadastrando seus clientes!</p>
+                    <a href="{% url 'customers:customer_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Cadastrar Primeiro Cliente
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

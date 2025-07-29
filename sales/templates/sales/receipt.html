@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recibo - Venda #{{ sale.id }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { font-size: 12px; }
+            .receipt-header { border-bottom: 2px solid #000; }
+        }
+        .receipt-container {
+            max-width: 80mm;
+            margin: 0 auto;
+            font-family: 'Courier New', monospace;
+        }
+        .receipt-header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px dashed #ccc;
+            margin-bottom: 20px;
+        }
+        .receipt-body {
+            padding: 0 10px;
+        }
+        .item-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .total-line {
+            border-top: 1px dashed #ccc;
+            padding-top: 10px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px dashed #ccc;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="receipt-container">
+            <!-- Cabeçalho -->
+            <div class="receipt-header">
+                <h3 class="mb-1">LOJA DE ROUPAS</h3>
+                <p class="mb-1">Sistema de Gestão de Estoque</p>
+                <small class="text-muted">CNPJ: 00.000.000/0001-00</small>
+            </div>
+
+            <!-- Corpo do Recibo -->
+            <div class="receipt-body">
+                <!-- Informações da Venda -->
+                <div class="mb-3">
+                    <div class="item-line">
+                        <span>Venda:</span>
+                        <span>#{{ sale.id }}</span>
+                    </div>
+                    <div class="item-line">
+                        <span>Data:</span>
+                        <span>{{ sale.created_at|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div class="item-line">
+                        <span>Vendedor:</span>
+                        <span>{{ sale.seller.get_full_name|default:sale.seller.username }}</span>
+                    </div>
+                    {% if sale.customer %}
+                    <div class="item-line">
+                        <span>Cliente:</span>
+                        <span>{{ sale.customer.name }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Itens -->
+                <div class="mb-3">
+                    <div style="border-bottom: 1px dashed #ccc; margin-bottom: 10px; padding-bottom: 5px;">
+                        <strong>ITENS</strong>
+                    </div>
+                    {% for item in items %}
+                    <div class="mb-2">
+                        <div class="item-line">
+                            <span>{{ item.product.title }}</span>
+                            <span></span>
+                        </div>
+                        <div class="item-line">
+                            <span>  {{ item.product.size }} - {{ item.product.color }}</span>
+                            <span></span>
+                        </div>
+                        <div class="item-line">
+                            <span>  {{ item.quantity }} x R$ {{ item.unit_price|floatformat:2 }}</span>
+                            <span>R$ {{ item.total_price|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Totais -->
+                <div class="total-line">
+                    <div class="item-line">
+                        <span>Subtotal:</span>
+                        <span>R$ {{ sale.total_amount|floatformat:2 }}</span>
+                    </div>
+                    {% if sale.discount > 0 %}
+                    <div class="item-line">
+                        <span>Desconto:</span>
+                        <span>-R$ {{ sale.discount|floatformat:2 }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="item-line" style="font-size: 16px; margin-top: 10px;">
+                        <span>TOTAL:</span>
+                        <span>R$ {{ sale.final_amount|floatformat:2 }}</span>
+                    </div>
+                </div>
+
+                <!-- Pagamento -->
+                <div class="mt-3">
+                    <div class="item-line">
+                        <span>Pagamento:</span>
+                        <span>{{ sale.get_payment_method_display }}</span>
+                    </div>
+                    {% if sale.installments > 1 %}
+                    <div class="item-line">
+                        <span>Parcelas:</span>
+                        <span>{{ sale.installments }}x</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Rodapé -->
+            <div class="footer">
+                <p class="mb-1">Obrigado pela preferência!</p>
+                <small class="text-muted">Volte sempre!</small>
+            </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="text-center mt-4 no-print">
+            <button onclick="window.print()" class="btn btn-primary me-2">
+                <i class="fas fa-print"></i>
+                Imprimir
+            </button>
+            <button onclick="window.close()" class="btn btn-secondary">
+                <i class="fas fa-times"></i>
+                Fechar
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+</body>
+</html>

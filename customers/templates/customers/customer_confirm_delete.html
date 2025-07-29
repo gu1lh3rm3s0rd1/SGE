@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Cliente - SGE{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Confirmar Exclusão
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <strong>Atenção!</strong> Esta ação não pode ser desfeita.
+                </div>
+                
+                <p>Você tem certeza que deseja excluir o cliente:</p>
+                
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title">{{ customer.name }}</h6>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                {% if customer.email %}
+                                <small class="text-muted">E-mail: {{ customer.email }}</small><br>
+                                {% endif %}
+                                {% if customer.phone %}
+                                <small class="text-muted">Telefone: {{ customer.phone }}</small><br>
+                                {% endif %}
+                            </div>
+                            <div class="col-sm-6">
+                                {% if customer.cpf %}
+                                <small class="text-muted">CPF: {{ customer.cpf }}</small><br>
+                                {% endif %}
+                                <small class="text-muted">Cliente desde: {{ customer.created_at|date:"d/m/Y" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if customer.sale_set.exists %}
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Observação:</strong> Este cliente possui histórico de vendas. 
+                    Ao excluir o cliente, as vendas serão mantidas, mas ficarão sem cliente associado.
+                </div>
+                {% endif %}
+                
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'customers:customer_detail' customer.pk %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i>
+                            Sim, Excluir Cliente
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Adicionar confirmação extra
+    const deleteForm = document.querySelector('form');
+    deleteForm.addEventListener('submit', function(e) {
+        if (!confirm('Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

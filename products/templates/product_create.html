@@ -1,18 +1,243 @@
 {% extends 'base.html' %}
 
-{% block content %}
-  <div class="container mt-4">
-    <h3 class="display-4">Cadastrar Produto</h3>
+{% block title %}SGE - Cadastrar Produto{% endblock %}
 
-    <div class="card">
-      <div class="card-body">
-        <form method="post">
-          {% csrf_token %}
-          {{ form.as_p }}
-          <button type="submit" class="btn btn-primary">Salvar Produto</button>
-        </form>
-      </div>
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="bi bi-plus-circle"></i> Cadastrar Novo Produto
+            </h2>
+        </div>
     </div>
-    <a href="{% url 'product_list' %}" class="btn btn-secondary mt-3">Cancelar e Voltar para a Lista de Produtos</a>
-  </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Informações Básicas -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="bi bi-info-circle"></i> Informações Básicas
+                                </h5>
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="text-danger">{{ form.title.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.is_active.id_for_label }}" class="form-label">{{ form.is_active.label }}</label>
+                                <div class="form-check form-switch">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        Produto ativo para venda
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Categorização -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="bi bi-tags"></i> Categorização
+                                </h5>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">{{ form.category.label }}</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="text-danger">{{ form.category.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.brand.id_for_label }}" class="form-label">{{ form.brand.label }}</label>
+                                {{ form.brand }}
+                                {% if form.brand.errors %}
+                                    <div class="text-danger">{{ form.brand.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Características do Produto -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="bi bi-palette"></i> Características
+                                </h5>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.size.id_for_label }}" class="form-label">{{ form.size.label }}</label>
+                                {{ form.size }}
+                                {% if form.size.errors %}
+                                    <div class="text-danger">{{ form.size.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.color.id_for_label }}" class="form-label">{{ form.color.label }}</label>
+                                {{ form.color }}
+                                {% if form.color.errors %}
+                                    <div class="text-danger">{{ form.color.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Códigos de Identificação -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="bi bi-upc-scan"></i> Códigos de Identificação
+                                </h5>
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.barcode.id_for_label }}" class="form-label">{{ form.barcode.label }}</label>
+                                {{ form.barcode }}
+                                <small class="text-muted">Você pode escanear diretamente com um leitor de código de barras</small>
+                                {% if form.barcode.errors %}
+                                    <div class="text-danger">{{ form.barcode.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.sku.id_for_label }}" class="form-label">{{ form.sku.label }}</label>
+                                {{ form.sku }}
+                                {% if form.sku.errors %}
+                                    <div class="text-danger">{{ form.sku.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Preços -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="bi bi-currency-dollar"></i> Preços
+                                </h5>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.cost_price.id_for_label }}" class="form-label">{{ form.cost_price.label }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    {{ form.cost_price }}
+                                </div>
+                                {% if form.cost_price.errors %}
+                                    <div class="text-danger">{{ form.cost_price.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.selling_price.id_for_label }}" class="form-label">{{ form.selling_price.label }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    {{ form.selling_price }}
+                                </div>
+                                {% if form.selling_price.errors %}
+                                    <div class="text-danger">{{ form.selling_price.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.min_stock.id_for_label }}" class="form-label">{{ form.min_stock.label }}</label>
+                                {{ form.min_stock }}
+                                <small class="text-muted">Alerta quando estoque for menor</small>
+                                {% if form.min_stock.errors %}
+                                    <div class="text-danger">{{ form.min_stock.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Descrição e Imagem -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="bi bi-card-text"></i> Informações Adicionais
+                                </h5>
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="text-danger">{{ form.description.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.image.id_for_label }}" class="form-label">{{ form.image.label }}</label>
+                                {{ form.image }}
+                                <small class="text-muted">Ajuda na identificação do produto</small>
+                                {% if form.image.errors %}
+                                    <div class="text-danger">{{ form.image.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Erros gerais do formulário -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Botões de Ação -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr>
+                                <button type="submit" class="btn btn-success btn-lg me-3">
+                                    <i class="bi bi-check2"></i> Salvar Produto
+                                </button>
+                                <a href="{% url 'product_list' %}" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel de Ajuda -->
+        <div class="col-lg-4">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb"></i> Dicas de Cadastro</h6>
+                </div>
+                <div class="card-body">
+                    <small>
+                        <p><strong>Nome do Produto:</strong> Use nomes claros e descritivos.</p>
+                        <p><strong>Código de Barras:</strong> Se você tem um leitor, pode escanear diretamente no campo.</p>
+                        <p><strong>Preços:</strong> O preço de venda deve ser maior que o de custo.</p>
+                        <p><strong>Estoque Mínimo:</strong> Sistema alertará quando estoque ficar baixo.</p>
+                        <p><strong>Foto:</strong> Ajuda muito na identificação rápida do produto.</p>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-focus no campo de código de barras para facilitar o escaneamento
+document.getElementById('{{ form.barcode.id_for_label }}').focus();
+
+// Calcular margem de lucro em tempo real
+const costInput = document.getElementById('{{ form.cost_price.id_for_label }}');
+const sellingInput = document.getElementById('{{ form.selling_price.id_for_label }}');
+
+function calculateMargin() {
+    const cost = parseFloat(costInput.value) || 0;
+    const selling = parseFloat(sellingInput.value) || 0;
+    
+    if (cost > 0 && selling > 0) {
+        const margin = ((selling - cost) / cost * 100).toFixed(1);
+        console.log(`Margem de lucro: ${margin}%`);
+    }
+}
+
+costInput?.addEventListener('change', calculateMargin);
+sellingInput?.addEventListener('change', calculateMargin);
+</script>
 {% endblock %}

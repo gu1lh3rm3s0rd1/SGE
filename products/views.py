@@ -2,43 +2,57 @@ from rest_framework import generics
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
+from django.db.models import Q
 from app import metrics
 from brands.models import Brand
 from categories.models import Category
 from . import models, forms, serializers
+from django.http import JsonResponse
+from django.views import View
 
 
 class ProductListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     model = models.Product
     template_name = 'product_list.html'
     context_object_name = 'products'
-    paginate_by = 10
+    paginate_by = 20
     permission_required = 'products.view_product'
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        title = self.request.GET.get('title')
-        serie_number = self.request.GET.get('serie_number')
-        category = self.request.GET.get('category')
-        brand = self.request.GET.get('brand')
+        queryset = super().get_queryset().select_related('category', 'brand', 'size', 'color')
+        
+        # Usar o formulário de busca
+        search_form = forms.ProductSearchForm(self.request.GET)
+        
+        if search_form.is_valid():
+            search = search_form.cleaned_data.get('search')
+            category = search_form.cleaned_data.get('category')
+            size = search_form.cleaned_data.get('size')
+            color = search_form.cleaned_data.get('color')
+            
+            if search:
+                queryset = queryset.filter(
+                    Q(title__icontains=search) |
+                    Q(barcode__icontains=search) |
+                    Q(sku__icontains=search)
+                )
+            
+            if category:
+                queryset = queryset.filter(category=category)
+            
+            if size:
+                queryset = queryset.filter(size=size)
+                
+            if color:
+                queryset = queryset.filter(color=color)
 
-        if title:
-            queryset = queryset.filter(title__icontains=title)
-        if serie_number:
-            queryset = queryset.filter(serie_number__icontains=serie_number)
-        if category:
-            queryset = queryset.filter(category_id=category)
-        if brand:
-            queryset = queryset.filter(brand__id=brand)
-
-        return queryset
+        return queryset.filter(is_active=True)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['search_form'] = forms.ProductSearchForm(self.request.GET)
         context['product_metrics'] = metrics.get_product_metrics()
         context['sales_metrics'] = metrics.get_sales_metrics()
-        context['categories'] = Category.objects.all()
-        context['brands'] = Brand.objects.all()
         return context
 
 
@@ -48,6 +62,13 @@ class ProductCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
     form_class = forms.ProductForm
     success_url = reverse_lazy('product_list')
     permission_required = 'products.add_product'
+
+    def get_initial(self):
+        initial = super().get_initial()
+        codigo = self.request.GET.get('codigo')
+        if codigo:
+            initial['serie_number'] = codigo
+        return initial
 
 
 class ProductDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
@@ -79,3 +100,13 @@ class ProductCreateListAPIView(generics.ListCreateAPIView):
 class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.Product.objects.all()
     serializer_class = serializers.ProductSerializer
+
+
+class ProductLookupView(LoginRequiredMixin, View):
+    def get(self, request):
+        codigo = request.GET.get('codigo')
+        produto = models.Product.objects.filter(serie_number=codigo).first()
+        if produto:
+            return JsonResponse({'exists': True, 'title': produto.title, 'id': produto.id})
+        else:
+            return JsonResponse({'exists': False})

@@ -61,6 +61,30 @@
               </a>
             </li>
           {% endif %}
+          <li>
+            <a href="{% url 'sales:quick_sale' %}" class="nav-link px-0 align-middle">
+              <i class="bi bi-cash-coin fs-4 text-success"></i>
+              <span class="ms-1">Venda Rápida</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'sales:sale_list' %}" class="nav-link px-0 align-middle">
+              <i class="bi bi-receipt fs-4"></i>
+              <span class="ms-1">Vendas</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'customers:customer_list' %}" class="nav-link px-0 align-middle">
+              <i class="bi bi-people fs-4"></i>
+              <span class="ms-1">Clientes</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'reporting:dashboard' %}" class="nav-link px-0 align-middle">
+              <i class="bi bi-graph-up fs-4 text-info"></i>
+              <span class="ms-1">Relatórios</span>
+            </a>
+          </li>
           <li class="nav-item">
             {% if user.is_authenticated %}
             <form action="{% url 'logout' %}" method="post" id="logout-form" class="nav-link px-0 align-middle">

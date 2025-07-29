@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Relatório de Vendas - SGE{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #fff, #f8f9fa);
+        border: 1px solid #dee2e6;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        transition: transform 0.2s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .payment-badge {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-chart-line text-success"></i>
+        Relatório de Vendas
+    </h2>
+    <div class="btn-group">
+        <a href="{% url 'reporting:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i>
+            Voltar
+        </a>
+        <a href="{% url 'sales:quick_sale' %}" class="btn btn-success">
+            <i class="fas fa-cash-register"></i>
+            Nova Venda
+        </a>
+    </div>
+</div>
+
+<!-- Filtro de Período -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Período</label>
+                <select name="period" class="form-select" onchange="this.form.submit()">
+                    <option value="7" {% if period == '7' %}selected{% endif %}>Últimos 7 dias</option>
+                    <option value="30" {% if period == '30' %}selected{% endif %}>Últimos 30 dias</option>
+                    <option value="90" {% if period == '90' %}selected{% endif %}>Últimos 90 dias</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <small class="text-muted">
+                    <i class="fas fa-calendar"></i>
+                    Analisando período de {{ start_date|date:"d/m/Y" }} até {{ end_date|date:"d/m/Y" }}
+                </small>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Estatísticas Principais -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number text-primary">{{ total_sales }}</div>
+            <small class="text-muted">Vendas Realizadas</small>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number text-success">R$ {{ total_revenue|floatformat:2 }}</div>
+            <small class="text-muted">Faturamento Total</small>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number text-warning">R$ {{ total_discount|floatformat:2 }}</div>
+            <small class="text-muted">Total em Descontos</small>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number text-info">
+                {% if total_sales > 0 %}
+                    R$ {{ total_revenue|floatformat:2|add:0|div:total_sales|floatformat:2 }}
+                {% else %}
+                    R$ 0,00
+                {% endif %}
+            </div>
+            <small class="text-muted">Ticket Médio</small>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Vendas por Forma de Pagamento -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-credit-card"></i>
+                    Vendas por Forma de Pagamento
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if payment_stats %}
+                    {% for payment in payment_stats %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="payment-badge badge 
+                                {% if payment.payment_method == 'cash' %}bg-success
+                                {% elif payment.payment_method == 'card' %}bg-primary
+                                {% elif payment.payment_method == 'pix' %}bg-warning
+                                {% else %}bg-secondary{% endif %}">
+                                {{ payment.payment_method|capfirst }}
+                            </span>
+                        </div>
+                        <div class="text-end">
+                            <div><strong>{{ payment.count }} vendas</strong></div>
+                            <small class="text-muted">R$ {{ payment.revenue|floatformat:2 }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-chart-pie fa-2x mb-2"></i>
+                        <p>Nenhuma venda no período</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Vendas por Vendedor -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-user-tie"></i>
+                    Performance por Vendedor
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if seller_stats %}
+                    {% for seller in seller_stats %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <strong>
+                                {% if seller.seller__first_name %}
+                                    {{ seller.seller__first_name }} {{ seller.seller__last_name }}
+                                {% else %}
+                                    {{ seller.seller__username }}
+                                {% endif %}
+                            </strong>
+                        </div>
+                        <div class="text-end">
+                            <div><strong>{{ seller.count }} vendas</strong></div>
+                            <small class="text-success">R$ {{ seller.revenue|floatformat:2 }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-users fa-2x mb-2"></i>
+                        <p>Nenhuma venda no período</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vendas por Dia -->
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-calendar-day"></i>
+            Vendas Diárias
+        </h6>
+    </div>
+    <div class="card-body">
+        {% if daily_sales %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Vendas</th>
+                            <th>Faturamento</th>
+                            <th>Ticket Médio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for date, data in daily_sales.items %}
+                        <tr>
+                            <td>{{ date|date:"d/m/Y" }}</td>
+                            <td>
+                                <span class="badge bg-primary">{{ data.count }}</span>
+                            </td>
+                            <td>
+                                <strong class="text-success">R$ {{ data.revenue|floatformat:2 }}</strong>
+                            </td>
+                            <td>
+                                <span class="text-muted">
+                                    R$ {% widthratio data.revenue data.count 1 %}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-chart-line fa-3x mb-3"></i>
+                <h5>Nenhuma venda encontrada</h5>
+                <p>Não há vendas registradas no período selecionado.</p>
+                <a href="{% url 'sales:quick_sale' %}" class="btn btn-success">
+                    <i class="fas fa-plus"></i>
+                    Registrar Primeira Venda
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Adicionar interatividade aos gráficos se necessário
+document.addEventListener('DOMContentLoaded', function() {
+    // Aqui você pode adicionar Chart.js ou outro library de gráficos
+    console.log('Relatório de vendas carregado');
+});
+</script>
+{% endblock %}

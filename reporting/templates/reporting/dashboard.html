@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Relatórios - SGE{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+        border: none;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    }
+    
+    .report-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .report-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        border: 1px solid #dee2e6;
+        text-align: center;
+    }
+    
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-chart-bar text-primary"></i>
+        Relatórios e Análises
+    </h2>
+    <div class="btn-group">
+        <a href="{% url 'sales:quick_sale' %}" class="btn btn-success">
+            <i class="fas fa-cash-register"></i>
+            Nova Venda
+        </a>
+    </div>
+</div>
+
+<!-- Filtro de Período -->
+<div class="filter-section">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Período de Análise</label>
+            <select name="period" class="form-select" onchange="this.form.submit()">
+                <option value="7" {% if period == '7' %}selected{% endif %}>Últimos 7 dias</option>
+                <option value="30" {% if period == '30' %}selected{% endif %}>Últimos 30 dias</option>
+                <option value="90" {% if period == '90' %}selected{% endif %}>Últimos 90 dias</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <small class="text-muted">
+                <i class="fas fa-calendar"></i>
+                {{ start_date|date:"d/m/Y" }} até {{ end_date|date:"d/m/Y" }}
+            </small>
+        </div>
+    </form>
+</div>
+
+<!-- Cards de Relatórios -->
+<div class="row g-4 mb-5">
+    <div class="col-md-6 col-lg-3">
+        <div class="card report-card h-100" onclick="location.href='{% url 'reporting:sales' %}?period={{ period }}'">
+            <div class="card-body text-center">
+                <div class="report-icon text-success">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h5 class="card-title" style="color: #000 !important;">Vendas</h5>
+                <p class="card-text text-muted">
+                    Análise de vendas por período, formas de pagamento e vendedores
+                </p>
+                <span class="badge bg-success">Ver Relatório</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card report-card h-100" onclick="location.href='{% url 'reporting:products' %}?period={{ period }}'">
+            <div class="card-body text-center">
+                <div class="report-icon text-primary">
+                    <i class="fas fa-tshirt"></i>
+                </div>
+                <h5 class="card-title">Produtos</h5>
+                <p class="card-text text-muted">
+                    Produtos mais vendidos, análise de performance e tendências
+                </p>
+                <span class="badge bg-primary">Ver Relatório</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card report-card h-100" onclick="location.href='{% url 'reporting:stock' %}'">
+            <div class="card-body text-center">
+                <div class="report-icon text-warning">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <h5 class="card-title">Estoque</h5>
+                <p class="card-text text-muted">
+                    Níveis de estoque, produtos em falta e alertas de reposição
+                </p>
+                <span class="badge bg-warning">Ver Relatório</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card report-card h-100" onclick="location.href='{% url 'reporting:customers' %}?period={{ period }}'">
+            <div class="card-body text-center">
+                <div class="report-icon text-info">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h5 class="card-title">Clientes</h5>
+                <p class="card-text text-muted">
+                    Análise de clientes, compras e comportamento de consumo
+                </p>
+                <span class="badge bg-info">Ver Relatório</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumo Rápido -->
+<div class="row g-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Visão Geral - {{ period }} dias
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4 text-center">
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <div class="stats-number text-success" id="total-sales">0</div>
+                            <small class="text-muted">Vendas Realizadas</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <div class="stats-number text-primary" id="total-revenue">R$ 0,00</div>
+                            <small class="text-muted">Faturamento</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <div class="stats-number text-warning" id="low-stock">0</div>
+                            <small class="text-muted">Produtos em Baixo Estoque</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <div class="stats-number text-info" id="total-customers">0</div>
+                            <small class="text-muted">Clientes Cadastrados</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Atalhos Rápidos -->
+<div class="row g-4 mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-bolt"></i>
+                    Ações Rápidas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'product_create' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-plus"></i>
+                        Novo Produto
+                    </a>
+                    <a href="{% url 'customers:customer_create' %}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-user-plus"></i>
+                        Novo Cliente
+                    </a>
+                    <a href="{% url 'inflow_create' %}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-arrow-down"></i>
+                        Entrada de Estoque
+                    </a>
+                    <a href="{% url 'reporting:stock' %}?low_stock_only=1" class="btn btn-outline-warning btn-sm">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Produtos em Falta
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Carregar estatísticas via AJAX para melhor performance
+document.addEventListener('DOMContentLoaded', function() {
+    loadQuickStats();
+});
+
+function loadQuickStats() {
+    // Aqui você pode fazer chamadas AJAX para carregar as estatísticas
+    // Por enquanto, vamos simular com dados estáticos
+    
+    // Simular carregamento
+    setTimeout(function() {
+        document.getElementById('total-sales').textContent = '45';
+        document.getElementById('total-revenue').textContent = 'R$ 12.450,00';
+        document.getElementById('low-stock').textContent = '8';
+        document.getElementById('total-customers').textContent = '127';
+    }, 500);
+}
+</script>
+{% endblock %}

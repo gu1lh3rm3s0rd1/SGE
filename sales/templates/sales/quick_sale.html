@@ -1,0 +1,673 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Venda Rápida - SGE{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calculator-container {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .product-search {
+        font-size: 1.2rem;
+        padding: 15px;
+        border: 3px solid #007bff;
+        border-radius: 10px;
+    }
+    
+    .cart-item {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s ease;
+    }
+    
+    .cart-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .quantity-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .total-display {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        margin: 20px 0;
+    }
+    
+    .total-amount {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .action-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .btn-large {
+        padding: 15px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        border-radius: 10px;
+    }
+    
+    .payment-options {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin: 15px 0;
+    }
+    
+    .payment-btn {
+        padding: 10px;
+        border: 2px solid #dee2e6;
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .payment-btn.active {
+        border-color: #007bff;
+        background: #e3f2fd;
+        color: #007bff;
+    }
+    
+    .recent-sales {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 20px;
+    }
+    
+    @media (max-width: 768px) {
+        .action-buttons {
+            grid-template-columns: 1fr;
+        }
+        .payment-options {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Coluna Principal - Interface de Venda -->
+        <div class="col-md-8">
+            <div class="calculator-container">
+                <h2 class="mb-4 text-center">
+                    <i class="fas fa-cash-register text-primary"></i>
+                    Venda Rápida
+                </h2>
+                
+                <!-- Busca de Produto -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Adicionar Produto</label>
+                    <div class="position-relative">
+                        <input type="text" 
+                               id="product-search" 
+                               class="form-control product-search" 
+                               placeholder="Digite o código de barras ou busque pelo nome..."
+                               autocomplete="off"
+                               autofocus>
+                        <div id="product-suggestions" class="position-absolute w-100 bg-white border rounded shadow" style="z-index: 1000; display: none;"></div>
+                    </div>
+                </div>
+                
+                <!-- Carrinho de Compras -->
+                <div id="cart-items" class="mb-4">
+                    <!-- Itens serão adicionados aqui dinamicamente -->
+                </div>
+                
+                <!-- Total -->
+                <div class="total-display">
+                    <p class="mb-1">Total da Venda</p>
+                    <p class="total-amount" id="total-amount">R$ 0,00</p>
+                    <div class="row mt-3">
+                        <div class="col-6">
+                            <small>Subtotal: <span id="subtotal">R$ 0,00</span></small>
+                        </div>
+                        <div class="col-6">
+                            <small>Desconto: <span id="discount-display">R$ 0,00</span></small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Desconto -->
+                <div class="mb-3">
+                    <label class="form-label">Desconto (R$)</label>
+                    <input type="number" id="discount-input" class="form-control" 
+                           min="0" step="0.01" value="0" 
+                           placeholder="0,00">
+                </div>
+                
+                <!-- Forma de Pagamento -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Forma de Pagamento</label>
+                    <div class="payment-options">
+                        <button type="button" class="payment-btn active" data-payment="dinheiro">
+                            <i class="fas fa-money-bill-wave"></i><br>Dinheiro
+                        </button>
+                        <button type="button" class="payment-btn" data-payment="cartao_debito">
+                            <i class="fas fa-credit-card"></i><br>Débito
+                        </button>
+                        <button type="button" class="payment-btn" data-payment="cartao_credito">
+                            <i class="fas fa-credit-card"></i><br>Crédito
+                        </button>
+                        <button type="button" class="payment-btn" data-payment="pix">
+                            <i class="fas fa-qrcode"></i><br>PIX
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Botões de Ação -->
+                <div class="action-buttons">
+                    <button type="button" id="clear-cart" class="btn btn-outline-secondary btn-large">
+                        <i class="fas fa-trash"></i> Limpar
+                    </button>
+                    <button type="button" id="finalize-sale" class="btn btn-success btn-large">
+                        <i class="fas fa-check"></i> Finalizar Venda
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Coluna Lateral - Informações -->
+        <div class="col-md-4">
+            <!-- Cliente -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-user"></i> Cliente
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <input type="text" id="customer-search" class="form-control mb-2" 
+                           placeholder="Buscar cliente...">
+                    <div id="selected-customer" class="text-muted">
+                        <small>Cliente avulso</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Atalhos -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-keyboard"></i> Atalhos
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <small class="d-block"><kbd>F1</kbd> Buscar produto</small>
+                    <small class="d-block"><kbd>F2</kbd> Novo cliente</small>
+                    <small class="d-block"><kbd>F9</kbd> Finalizar venda</small>
+                    <small class="d-block"><kbd>Esc</kbd> Limpar carrinho</small>
+                </div>
+            </div>
+            
+            <!-- Vendas Recentes -->
+            {% if recent_sales %}
+            <div class="recent-sales">
+                <h6 class="mb-3">
+                    <i class="fas fa-history"></i> Vendas Recentes
+                </h6>
+                {% for sale in recent_sales %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <small class="text-muted">#{{ sale.id }}</small>
+                        <br>
+                        <small>{{ sale.created_at|date:"d/m H:i" }}</small>
+                    </div>
+                    <div class="text-end">
+                        <strong>R$ {{ sale.final_amount|floatformat:2 }}</strong>
+                        <br>
+                        <small class="text-muted">{{ sale.get_payment_method_display }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="confirmSaleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle"></i> Confirmar Venda
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div id="sale-summary">
+                    <!-- Resumo da venda será preenchido aqui -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="confirm-sale" class="btn btn-success">Confirmar Venda</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variáveis globais
+let cart = [];
+let selectedCustomer = null;
+let selectedPayment = 'dinheiro';
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEventListeners();
+    initializeKeyboardShortcuts();
+    updateCartDisplay();
+});
+
+// Event listeners
+function initializeEventListeners() {
+    // Busca de produto
+    const productSearch = document.getElementById('product-search');
+    productSearch.addEventListener('input', debounce(searchProducts, 300));
+    productSearch.addEventListener('keydown', handleProductSearchKeydown);
+    
+    // Desconto
+    document.getElementById('discount-input').addEventListener('input', updateCartDisplay);
+    
+    // Pagamento
+    document.querySelectorAll('.payment-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            selectPaymentMethod(this.dataset.payment);
+        });
+    });
+    
+    // Botões de ação
+    document.getElementById('clear-cart').addEventListener('click', clearCart);
+    document.getElementById('finalize-sale').addEventListener('click', showSaleConfirmation);
+    document.getElementById('confirm-sale').addEventListener('click', processSale);
+}
+
+// Atalhos de teclado
+function initializeKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F1') {
+            e.preventDefault();
+            document.getElementById('product-search').focus();
+        } else if (e.key === 'F9') {
+            e.preventDefault();
+            showSaleConfirmation();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            clearCart();
+        }
+    });
+}
+
+// Busca de produtos
+function searchProducts() {
+    const query = document.getElementById('product-search').value.trim();
+    if (query.length < 2) {
+        hideProductSuggestions();
+        return;
+    }
+    
+    fetch(`/sales/api/products/?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            showProductSuggestions(data.products);
+        })
+        .catch(error => {
+            console.error('Erro na busca:', error);
+        });
+}
+
+// Exibir sugestões de produtos
+function showProductSuggestions(products) {
+    const container = document.getElementById('product-suggestions');
+    
+    if (products.length === 0) {
+        hideProductSuggestions();
+        return;
+    }
+    
+    let html = '';
+    products.forEach(product => {
+        html += `
+            <div class="suggestion-item p-2 border-bottom" 
+                 style="cursor: pointer;"
+                 onclick="addProductToCart(${product.id}, '${product.display_name}', ${product.selling_price})">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <strong>${product.title}</strong>
+                        <br>
+                        <small class="text-muted">${product.size} - ${product.color}</small>
+                        <br>
+                        <small class="text-info">${product.stock_info}</small>
+                    </div>
+                    <div class="text-end">
+                        <strong class="text-success">R$ ${product.selling_price.toFixed(2)}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    container.style.display = 'block';
+}
+
+// Esconder sugestões
+function hideProductSuggestions() {
+    document.getElementById('product-suggestions').style.display = 'none';
+}
+
+// Tratar teclas na busca de produto
+function handleProductSearchKeydown(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const suggestions = document.querySelectorAll('.suggestion-item');
+        if (suggestions.length > 0) {
+            suggestions[0].click();
+        }
+    }
+}
+
+// Adicionar produto ao carrinho
+function addProductToCart(productId, productName, price) {
+    const existingItem = cart.find(item => item.productId === productId);
+    
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({
+            productId: productId,
+            productName: productName,
+            price: price,
+            quantity: 1
+        });
+    }
+    
+    updateCartDisplay();
+    hideProductSuggestions();
+    document.getElementById('product-search').value = '';
+    document.getElementById('product-search').focus();
+}
+
+// Atualizar exibição do carrinho
+function updateCartDisplay() {
+    const cartContainer = document.getElementById('cart-items');
+    
+    if (cart.length === 0) {
+        cartContainer.innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                <p>Carrinho vazio</p>
+                <small>Use o leitor de código de barras ou busque produtos pelo nome</small>
+            </div>
+        `;
+    } else {
+        let html = '';
+        cart.forEach((item, index) => {
+            const total = item.price * item.quantity;
+            html += `
+                <div class="cart-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="flex-grow-1">
+                            <strong>${item.productName}</strong>
+                            <br>
+                            <small class="text-muted">R$ ${item.price.toFixed(2)} cada</small>
+                        </div>
+                        <div class="quantity-controls">
+                            <button class="btn btn-outline-primary quantity-btn" 
+                                    onclick="changeQuantity(${index}, -1)">-</button>
+                            <span class="mx-2 fw-bold">${item.quantity}</span>
+                            <button class="btn btn-outline-primary quantity-btn" 
+                                    onclick="changeQuantity(${index}, 1)">+</button>
+                        </div>
+                        <div class="text-end ms-3">
+                            <strong class="text-success">R$ ${total.toFixed(2)}</strong>
+                            <br>
+                            <button class="btn btn-sm btn-outline-danger" 
+                                    onclick="removeFromCart(${index})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        cartContainer.innerHTML = html;
+    }
+    
+    updateTotals();
+}
+
+// Alterar quantidade
+function changeQuantity(index, change) {
+    cart[index].quantity += change;
+    if (cart[index].quantity <= 0) {
+        cart.splice(index, 1);
+    }
+    updateCartDisplay();
+}
+
+// Remover do carrinho
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCartDisplay();
+}
+
+// Atualizar totais
+function updateTotals() {
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const discount = parseFloat(document.getElementById('discount-input').value) || 0;
+    const total = Math.max(0, subtotal - discount);
+    
+    document.getElementById('subtotal').textContent = `R$ ${subtotal.toFixed(2)}`;
+    document.getElementById('discount-display').textContent = `R$ ${discount.toFixed(2)}`;
+    document.getElementById('total-amount').textContent = `R$ ${total.toFixed(2)}`;
+}
+
+// Selecionar forma de pagamento
+function selectPaymentMethod(method) {
+    selectedPayment = method;
+    document.querySelectorAll('.payment-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-payment="${method}"]`).classList.add('active');
+}
+
+// Limpar carrinho
+function clearCart() {
+    if (cart.length > 0 && confirm('Deseja realmente limpar o carrinho?')) {
+        cart = [];
+        updateCartDisplay();
+        document.getElementById('discount-input').value = '0';
+        document.getElementById('product-search').focus();
+    }
+}
+
+// Mostrar confirmação de venda
+function showSaleConfirmation() {
+    if (cart.length === 0) {
+        alert('Adicione produtos ao carrinho antes de finalizar a venda.');
+        return;
+    }
+    
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const discount = parseFloat(document.getElementById('discount-input').value) || 0;
+    const total = Math.max(0, subtotal - discount);
+    
+    let summaryHtml = `
+        <div class="mb-3">
+            <h6>Itens da Venda:</h6>
+            <ul class="list-unstyled">
+    `;
+    
+    cart.forEach(item => {
+        summaryHtml += `
+            <li class="d-flex justify-content-between">
+                <span>${item.quantity}x ${item.productName}</span>
+                <span>R$ ${(item.price * item.quantity).toFixed(2)}</span>
+            </li>
+        `;
+    });
+    
+    summaryHtml += `
+            </ul>
+        </div>
+        <div class="border-top pt-3">
+            <div class="d-flex justify-content-between">
+                <span>Subtotal:</span>
+                <span>R$ ${subtotal.toFixed(2)}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Desconto:</span>
+                <span>R$ ${discount.toFixed(2)}</span>
+            </div>
+            <div class="d-flex justify-content-between fw-bold">
+                <span>Total:</span>
+                <span class="text-success">R$ ${total.toFixed(2)}</span>
+            </div>
+            <div class="mt-2">
+                <small class="text-muted">Pagamento: ${getPaymentMethodName(selectedPayment)}</small>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('sale-summary').innerHTML = summaryHtml;
+    new bootstrap.Modal(document.getElementById('confirmSaleModal')).show();
+}
+
+// Processar venda
+function processSale() {
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const discount = parseFloat(document.getElementById('discount-input').value) || 0;
+    
+    const saleData = {
+        items: cart.map(item => ({
+            product_id: item.productId,
+            quantity: item.quantity,
+            unit_price: item.price
+        })),
+        customer_id: selectedCustomer ? selectedCustomer.id : null,
+        discount: discount,
+        payment_method: selectedPayment,
+        notes: ''
+    };
+    
+    fetch('/sales/quick/process/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(saleData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`${data.message}\nTotal: R$ ${data.total.toFixed(2)}`);
+            
+            // Limpar carrinho e fechar modal
+            cart = [];
+            document.getElementById('discount-input').value = '0';
+            updateCartDisplay();
+            bootstrap.Modal.getInstance(document.getElementById('confirmSaleModal')).hide();
+            
+            // Perguntar se quer imprimir recibo
+            if (confirm('Deseja visualizar o recibo da venda?')) {
+                window.open(`/sales/${data.sale_id}/receipt/`, '_blank');
+            }
+            
+            document.getElementById('product-search').focus();
+        } else {
+            alert(`Erro: ${data.error}`);
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao processar venda:', error);
+        alert('Erro ao processar venda. Tente novamente.');
+    });
+}
+
+// Funções auxiliares
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function getPaymentMethodName(method) {
+    const methods = {
+        'dinheiro': 'Dinheiro',
+        'cartao_debito': 'Cartão de Débito',
+        'cartao_credito': 'Cartão de Crédito',
+        'pix': 'PIX'
+    };
+    return methods[method] || method;
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Fechar sugestões ao clicar fora
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#product-search') && !e.target.closest('#product-suggestions')) {
+        hideProductSuggestions();
+    }
+});
+</script>
+{% endblock %}

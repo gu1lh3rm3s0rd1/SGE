@@ -50,6 +50,13 @@ INSTALLED_APPS = [
     'inflows',
     'outflows',
     'ai',
+    
+    # Novas apps para loja de roupas
+    'sizes',
+    'colors',
+    'customers',
+    'sales',
+    'reporting',
 ]
 
 LOGIN_URL = 'login'
@@ -142,6 +149,11 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Media files (uploads)
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

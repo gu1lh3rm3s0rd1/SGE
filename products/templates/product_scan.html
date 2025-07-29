@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="display-4">Cadastro Rápido com Scanner</h3>
+
+  <input type="text" id="barcodeInput" class="form-control" placeholder="Escaneie o código de barras" autofocus>
+  <div id="feedback" class="mt-3"></div>
+</div>
+
+<script>
+document.getElementById('barcodeInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    const codigo = this.value;
+    fetch(`/products/lookup/?codigo=${codigo}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.exists) {
+          document.getElementById('feedback').innerHTML =
+            `<div class="alert alert-success">Produto encontrado: <strong>${data.title}</strong> 
+             <a href="/products/${data.id}/detail/" class="btn btn-sm btn-primary ml-2">Ver Produto</a></div>`;
+        } else {
+          window.location.href = `/products/create/?codigo=${codigo}`;
+        }
+      });
+    this.value = ''; // limpa o campo
+  }
+});
+</script>
+{% endblock %}
