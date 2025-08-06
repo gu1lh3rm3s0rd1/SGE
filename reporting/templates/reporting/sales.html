@@ -84,34 +84,28 @@
     <div class="col-md-3">
         <div class="stats-card">
             <div class="stats-number text-primary">{{ total_sales }}</div>
-            <small class="text-muted">Vendas Realizadas</small>
+            <small class="text-muted" style="color: #212529 !important;">Vendas Realizadas</small>
         </div>
     </div>
     
     <div class="col-md-3">
         <div class="stats-card">
             <div class="stats-number text-success">R$ {{ total_revenue|floatformat:2 }}</div>
-            <small class="text-muted">Faturamento Total</small>
+            <small class="text-muted" style="color: #212529 !important;">Faturamento Total</small>
         </div>
     </div>
     
     <div class="col-md-3">
         <div class="stats-card">
             <div class="stats-number text-warning">R$ {{ total_discount|floatformat:2 }}</div>
-            <small class="text-muted">Total em Descontos</small>
+            <small class="text-muted" style="color: #212529 !important;">Total em Descontos</small>
         </div>
     </div>
     
     <div class="col-md-3">
         <div class="stats-card">
-            <div class="stats-number text-info">
-                {% if total_sales > 0 %}
-                    R$ {{ total_revenue|floatformat:2|add:0|div:total_sales|floatformat:2 }}
-                {% else %}
-                    R$ 0,00
-                {% endif %}
-            </div>
-            <small class="text-muted">Ticket Médio</small>
+            <div class="stats-number text-info">R$ {{ average_ticket|floatformat:2 }}</div>
+            <small class="text-muted" style="color: #212529 !important;">Ticket Médio</small>
         </div>
     </div>
 </div>
@@ -226,7 +220,7 @@
                             </td>
                             <td>
                                 <span class="text-muted">
-                                    R$ {% widthratio data.revenue data.count 1 %}
+                                    R$ {{ data.average_ticket|floatformat:2 }}
                                 </span>
                             </td>
                         </tr>

@@ -13,7 +13,7 @@ class SupplierListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     permission_required = 'suppliers.view_supplier'
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().order_by('-id')
         name = self.request.GET.get('name')
 
         if name:
@@ -52,10 +52,10 @@ class SupplierDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView
 
 
 class SupplierCreateListAPIView(generics.ListCreateAPIView):
-    queryset = models.Supplier.objects.all()
+    queryset = models.Supplier.objects.all().order_by('-id')
     serializer_class = serializers.SupplierSerializer
 
 
 class SupplierRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = models.Supplier.objects.all()
+    queryset = models.Supplier.objects.all().order_by('-id')
     serializer_class = serializers.SupplierSerializer

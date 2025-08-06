@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Relatório de Produtos - SGE{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #fff, #f8f9fa);
+        border: 1px solid #dee2e6;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        transition: transform 0.2s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .product-item {
+        transition: all 0.2s ease;
+    }
+    
+    .product-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .quantity-badge {
+        font-size: 1rem;
+        padding: 8px 12px;
+        border-radius: 20px;
+    }
+    
+    .stock-alert { background-color: #fee; }
+    .stock-warning { background-color: #fff3cd; }
+    .stock-ok { background-color: #d1edff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-box text-primary"></i>
+        Relatório de Produtos
+    </h2>
+    <div class="btn-group">
+        <a href="{% url 'reporting:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i>
+            Voltar
+        </a>
+        <a href="{% url 'products:product_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            Novo Produto
+        </a>
+    </div>
+</div>
+
+<!-- Filtro de Período -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Período</label>
+                <select name="period" class="form-select" onchange="this.form.submit()">
+                    <option value="7" {% if period == '7' %}selected{% endif %}>Últimos 7 dias</option>
+                    <option value="30" {% if period == '30' %}selected{% endif %}>Últimos 30 dias</option>
+                    <option value="90" {% if period == '90' %}selected{% endif %}>Últimos 90 dias</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <small class="text-muted">
+                    <i class="fas fa-calendar"></i>
+                    Analisando período de {{ start_date|date:"d/m/Y" }} até {{ end_date|date:"d/m/Y" }}
+                </small>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Estatísticas de Estoque -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="stats-card">
+            <div class="stats-number text-primary">{{ top_products|length }}</div>
+            <small class="text-muted" style="color: #212529 !important;">Produtos Mais Vendidos</small>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stats-card">
+            <div class="stats-number text-warning">{{ low_stock_products|length }}</div>
+            <small class="text-muted" style="color: #212529 !important;">Produtos com Baixo Estoque</small>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stats-card">
+            <div class="stats-number text-danger">{{ out_of_stock_count }}</div>
+            <small class="text-muted" style="color: #212529 !important;">Produtos sem Estoque</small>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Produtos Mais Vendidos -->
+    <div class="col-md-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-trophy"></i>
+                    Produtos Mais Vendidos no Período
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if top_products %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Marca</th>
+                                    <th class="text-center">Qtd Vendida</th>
+                                    <th class="text-end">Receita</th>
+                                    <th class="text-center">Nº Vendas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in top_products %}
+                                <tr class="product-item">
+                                    <td>
+                                        <div>
+                                            <strong>{{ product.product__title }}</strong>
+                                            {% if product.product__size__name or product.product__color__name %}
+                                                <br>
+                                                <small class="text-muted">
+                                                    {{ product.product__size__name|default:'' }}
+                                                    {% if product.product__size__name and product.product__color__name %} - {% endif %}
+                                                    {{ product.product__color__name|default:'' }}
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>{{ product.product__brand__name|default:"-" }}</td>
+                                    <td class="text-center">
+                                        <span class="quantity-badge badge bg-primary">
+                                            {{ product.total_quantity }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <strong class="text-success">R$ {{ product.total_revenue|floatformat:2 }}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary">{{ product.sales_count }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                        <p>Nenhuma venda no período</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Produtos com Baixo Estoque -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                    Baixo Estoque
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if low_stock_products %}
+                    <div class="list-group list-group-flush">
+                        {% for product in low_stock_products %}
+                        <div class="list-group-item px-0 
+                            {% if product.quantity == 0 %}stock-alert
+                            {% elif product.quantity <= product.min_stock %}stock-warning
+                            {% else %}stock-ok{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="flex-grow-1">
+                                    <strong class="text-dark">{{ product.title }}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ product.brand.name|default:'-' }} | 
+                                        {{ product.size.name|default:'-' }} | 
+                                        {{ product.color.name|default:'-' }}
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge 
+                                        {% if product.quantity == 0 %}bg-danger
+                                        {% elif product.quantity <= product.min_stock %}bg-warning
+                                        {% else %}bg-success{% endif %}">
+                                        {{ product.quantity }}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">Mín: {{ product.min_stock }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'reporting:stock' %}?low_stock_only=1" class="btn btn-outline-warning btn-sm w-100">
+                            <i class="fas fa-eye"></i>
+                            Ver Relatório Completo de Estoque
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                        <p>Todos os produtos com estoque adequado!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-bolt"></i>
+            Ações Rápidas
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'products:product_create' %}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-plus"></i>
+                Novo Produto
+            </a>
+            <a href="{% url 'inflow_create' %}" class="btn btn-outline-success btn-sm">
+                <i class="fas fa-arrow-down"></i>
+                Entrada de Estoque
+            </a>
+            <a href="{% url 'reporting:stock' %}" class="btn btn-outline-info btn-sm">
+                <i class="fas fa-boxes"></i>
+                Relatório de Estoque
+            </a>
+            <a href="{% url 'sales:quick_sale' %}" class="btn btn-outline-warning btn-sm">
+                <i class="fas fa-cash-register"></i>
+                Nova Venda
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Relatório de produtos carregado');
+    
+    // Adicionar tooltips se necessário
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

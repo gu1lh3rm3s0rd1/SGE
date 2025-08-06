@@ -1,112 +1,119 @@
-from rest_framework import generics
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
-from django.db.models import Q
-from app import metrics
-from brands.models import Brand
-from categories.models import Category
-from . import models, forms, serializers
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.views import View
+from django.db.models import Q
+from django.core.paginator import Paginator
+
+from .models import Product
+from .forms import ProductForm, ProductSearchForm
+from categories.models import Category
+from brands.models import Brand
 
 
-class ProductListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
-    model = models.Product
-    template_name = 'product_list.html'
-    context_object_name = 'products'
-    paginate_by = 20
-    permission_required = 'products.view_product'
 
-    def get_queryset(self):
-        queryset = super().get_queryset().select_related('category', 'brand', 'size', 'color')
-        
-        # Usar o formulário de busca
-        search_form = forms.ProductSearchForm(self.request.GET)
-        
-        if search_form.is_valid():
-            search = search_form.cleaned_data.get('search')
-            category = search_form.cleaned_data.get('category')
-            size = search_form.cleaned_data.get('size')
-            color = search_form.cleaned_data.get('color')
-            
-            if search:
-                queryset = queryset.filter(
-                    Q(title__icontains=search) |
-                    Q(barcode__icontains=search) |
-                    Q(sku__icontains=search)
-                )
-            
-            if category:
-                queryset = queryset.filter(category=category)
-            
-            if size:
-                queryset = queryset.filter(size=size)
-                
-            if color:
-                queryset = queryset.filter(color=color)
-
-        return queryset.filter(is_active=True)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['search_form'] = forms.ProductSearchForm(self.request.GET)
-        context['product_metrics'] = metrics.get_product_metrics()
-        context['sales_metrics'] = metrics.get_sales_metrics()
-        return context
-
-
-class ProductCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
-    model = models.Product
-    template_name = 'product_create.html'
-    form_class = forms.ProductForm
-    success_url = reverse_lazy('product_list')
-    permission_required = 'products.add_product'
-
-    def get_initial(self):
-        initial = super().get_initial()
-        codigo = self.request.GET.get('codigo')
-        if codigo:
-            initial['serie_number'] = codigo
-        return initial
+@login_required
+def product_list(request):
+    """Lista de produtos com busca e filtros"""
+    products = Product.objects.select_related('category', 'brand', 'size', 'color').filter(is_active=True)
+    
+    # Busca por título ou número de série
+    search_title = request.GET.get('title', '').strip()
+    search_serie = request.GET.get('serie_number', '').strip()
+    category_id = request.GET.get('category', '').strip()
+    brand_id = request.GET.get('brand', '').strip()
+    
+    if search_title:
+        products = products.filter(title__icontains=search_title)
+    
+    if search_serie:
+        products = products.filter(
+            Q(barcode__icontains=search_serie) | 
+            Q(sku__icontains=search_serie)
+        )
+    
+    if category_id:
+        products = products.filter(category_id=category_id)
+    
+    if brand_id:
+        products = products.filter(brand_id=brand_id)
+    
+    # Ordenar por ID descendente
+    products = products.order_by('-id')
+    
+    # Paginação
+    paginator = Paginator(products, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'products': page_obj,
+        'categories': Category.objects.all().order_by('name'),
+        'brands': Brand.objects.all().order_by('name'),
+        'search_title': search_title,
+        'search_serie': search_serie,
+        'selected_category': category_id,
+        'selected_brand': brand_id,
+    }
+    return render(request, 'products/product_list.html', context)
 
 
-class ProductDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
-    model = models.Product
-    template_name = 'product_detail.html'
-    permission_required = 'products.view_product'
+@login_required
+def product_detail(request, pk):
+    """Detalhes do produto"""
+    product = get_object_or_404(Product, pk=pk)
+    context = {'product': product}
+    return render(request, 'products/product_detail.html', context)
 
 
-class ProductUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
-    model = models.Product
-    template_name = 'product_update.html'
-    form_class = forms.ProductForm
-    success_url = reverse_lazy('product_list')
-    permission_required = 'products.change_product'
+@login_required
+def product_create(request):
+    """Criar novo produto"""
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            product = form.save()
+            messages.success(request, f'Produto "{product.title}" criado com sucesso!')
+            return redirect('products:product_detail', pk=product.pk)
+    else:
+        form = ProductForm()
+    
+    context = {'form': form, 'title': 'Novo Produto'}
+    return render(request, 'products/product_form.html', context)
 
 
-class ProductDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
-    model = models.Product
-    template_name = 'product_delete.html'
-    success_url = reverse_lazy('product_list')
-    permission_required = 'products.delete_product'
+@login_required
+def product_update(request, pk):
+    """Atualizar produto"""
+    product = get_object_or_404(Product, pk=pk)
+    
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES, instance=product)
+        if form.is_valid():
+            product = form.save()
+            messages.success(request, f'Produto "{product.title}" atualizado com sucesso!')
+            return redirect('products:product_detail', pk=product.pk)
+    else:
+        form = ProductForm(instance=product)
+    
+    context = {
+        'form': form, 
+        'product': product,
+        'title': f'Editar Produto: {product.title}'
+    }
+    return render(request, 'products/product_form.html', context)
 
 
-class ProductCreateListAPIView(generics.ListCreateAPIView):
-    queryset = models.Product.objects.all()
-    serializer_class = serializers.ProductSerializer
-
-
-class ProductRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = models.Product.objects.all()
-    serializer_class = serializers.ProductSerializer
-
-
-class ProductLookupView(LoginRequiredMixin, View):
-    def get(self, request):
-        codigo = request.GET.get('codigo')
-        produto = models.Product.objects.filter(serie_number=codigo).first()
-        if produto:
-            return JsonResponse({'exists': True, 'title': produto.title, 'id': produto.id})
-        else:
-            return JsonResponse({'exists': False})
+@login_required
+def product_delete(request, pk):
+    """Excluir produto"""
+    product = get_object_or_404(Product, pk=pk)
+    
+    if request.method == 'POST':
+        product_name = product.title
+        product.delete()
+        messages.success(request, f'Produto "{product_name}" excluído com sucesso!')
+        return redirect('products:product_list')
+    
+    context = {'product': product}
+    return render(request, 'products/product_confirm_delete.html', context)

@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - SGE{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-box text-info"></i>
+        {{ title }}
+    </h2>
+    <a href="{% url 'products:product_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i>
+        Voltar
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- Informações Básicas -->
+                        <div class="col-md-8">
+                            <h5 class="mb-3">Informações Básicas</h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">{{ form.title.label }}</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="text-danger small">{{ form.title.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.category.label }}</label>
+                                        {{ form.category }}
+                                        {% if form.category.errors %}
+                                            <div class="text-danger small">{{ form.category.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.brand.label }}</label>
+                                        {{ form.brand }}
+                                        {% if form.brand.errors %}
+                                            <div class="text-danger small">{{ form.brand.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.size.label }}</label>
+                                        {{ form.size }}
+                                        {% if form.size.errors %}
+                                            <div class="text-danger small">{{ form.size.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.color.label }}</label>
+                                        {{ form.color }}
+                                        {% if form.color.errors %}
+                                            <div class="text-danger small">{{ form.color.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">{{ form.description.label }}</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Imagem -->
+                        <div class="col-md-4">
+                            <h5 class="mb-3">Imagem do Produto</h5>
+                            
+                            {% if product.image %}
+                                <div class="mb-3">
+                                    <img src="{{ product.image.url }}" class="img-fluid rounded" alt="{{ product.title }}" style="max-height: 200px;">
+                                </div>
+                            {% endif %}
+                            
+                            <div class="mb-3">
+                                <label class="form-label">{{ form.image.label }}</label>
+                                {{ form.image }}
+                                {% if form.image.errors %}
+                                    <div class="text-danger small">{{ form.image.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Formatos aceitos: JPG, PNG. Tamanho máximo: 5MB</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Códigos e Preços -->
+                    <h5 class="mb-3">Códigos e Preços</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ form.barcode.label }}</label>
+                                {{ form.barcode }}
+                                {% if form.barcode.errors %}
+                                    <div class="text-danger small">{{ form.barcode.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Código de barras para leitura rápida</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{{ form.sku.label }}</label>
+                                {{ form.sku }}
+                                {% if form.sku.errors %}
+                                    <div class="text-danger small">{{ form.sku.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Código interno (opcional)</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">{{ form.cost_price.label }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    {{ form.cost_price }}
+                                </div>
+                                {% if form.cost_price.errors %}
+                                    <div class="text-danger small">{{ form.cost_price.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">{{ form.selling_price.label }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    {{ form.selling_price }}
+                                </div>
+                                {% if form.selling_price.errors %}
+                                    <div class="text-danger small">{{ form.selling_price.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">{{ form.min_stock.label }}</label>
+                                {{ form.min_stock }}
+                                {% if form.min_stock.errors %}
+                                    <div class="text-danger small">{{ form.min_stock.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Alerta de estoque baixo</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    {{ form.is_active.label }}
+                                </label>
+                                {% if form.is_active.errors %}
+                                    <div class="text-danger small">{{ form.is_active.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'products:product_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i>
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i>
+                            Salvar Produto
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calcular margem de lucro em tempo real
+    const costPrice = document.getElementById('id_cost_price');
+    const sellingPrice = document.getElementById('id_selling_price');
+    
+    function calculateMargin() {
+        const cost = parseFloat(costPrice.value) || 0;
+        const selling = parseFloat(sellingPrice.value) || 0;
+        
+        if (cost > 0) {
+            const margin = ((selling - cost) / cost * 100).toFixed(1);
+            const profit = (selling - cost).toFixed(2);
+            
+            // Remover alertas existentes
+            const existingAlert = document.querySelector('.margin-alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+            
+            // Criar novo alerta
+            if (selling > 0) {
+                const alertClass = margin > 30 ? 'alert-success' : margin > 0 ? 'alert-warning' : 'alert-danger';
+                const alertHtml = `
+                    <div class="alert ${alertClass} margin-alert mt-2">
+                        <small>
+                            <strong>Margem:</strong> ${margin}% | 
+                            <strong>Lucro:</strong> R$ ${profit}
+                        </small>
+                    </div>
+                `;
+                sellingPrice.closest('.mb-3').insertAdjacentHTML('beforeend', alertHtml);
+            }
+        }
+    }
+    
+    if (costPrice && sellingPrice) {
+        costPrice.addEventListener('input', calculateMargin);
+        sellingPrice.addEventListener('input', calculateMargin);
+        
+        // Calcular na inicialização
+        calculateMargin();
+    }
+});
+</script>
+{% endblock %}

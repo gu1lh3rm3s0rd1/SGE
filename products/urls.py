@@ -1,17 +1,12 @@
 from django.urls import path
 from . import views
 
+app_name = 'products'
 
 urlpatterns = [
-    path('products/list/', views.ProductListView.as_view(), name='product_list'),
-    path('products/create/', views.ProductCreateView.as_view(), name='product_create'),
-    path('products/<int:pk>/detail/', views.ProductDetailView.as_view(), name='product_detail'),
-    path('products/<int:pk>/update/', views.ProductUpdateView.as_view(), name='product_update'),
-    path('products/<int:pk>/delete/', views.ProductDeleteView.as_view(), name='product_delete'),
-
-    path('api/v1/products/', views.ProductCreateListAPIView.as_view(), name='product-create-list-api-view'),
-    path('api/v1/products/<int:pk>/', views.ProductRetrieveUpdateDestroyAPIView.as_view(), name='product-detail-api-view'),
-    # path('products/scan/', views.TemplateView.as_view(template_name='product_scan.html'), name='product_scan'),
-    path('products/lookup/', views.ProductLookupView.as_view(), name='product_lookup'),
-
+    path('', views.product_list, name='product_list'),
+    path('create/', views.product_create, name='product_create'),
+    path('<int:pk>/', views.product_detail, name='product_detail'),
+    path('<int:pk>/update/', views.product_update, name='product_update'),
+    path('<int:pk>/delete/', views.product_delete, name='product_delete'),
 ]

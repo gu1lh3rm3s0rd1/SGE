@@ -26,7 +26,7 @@
     </div>
     {% if perms.products.add_product %}
       <div class="col-md-6">
-        <a href="{% url 'product_create' %}" class="btn btn-success float-end">
+        <a href="{% url 'products:product_create' %}" class="btn btn-success float-end">
           <i class="bi bi-plus"></i> Novo Produto
         </a>
       </div>

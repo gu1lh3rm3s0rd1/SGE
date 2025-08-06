@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.title }} - SGE{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-box text-info"></i>
+        Detalhes do Produto
+    </h2>
+    <div>
+        <a href="{% url 'products:product_update' product.pk %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i>
+            Editar
+        </a>
+        <a href="{% url 'products:product_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i>
+            Voltar
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" class="img-fluid rounded mb-3" alt="{{ product.title }}" style="max-height: 300px;">
+                {% else %}
+                    <div class="bg-light rounded d-flex align-items-center justify-content-center mb-3" style="height: 200px;">
+                        <i class="fas fa-image fa-3x text-muted"></i>
+                    </div>
+                {% endif %}
+                
+                <div class="d-grid gap-2">
+                    <span class="badge bg-{% if product.quantity <= product.min_stock %}danger{% elif product.quantity <= product.min_stock|add:5 %}warning{% else %}success{% endif %} fs-6">
+                        Estoque: {{ product.quantity }} unidades
+                    </span>
+                    {% if product.quantity <= product.min_stock %}
+                        <small class="text-danger">⚠️ Estoque baixo! Mínimo: {{ product.min_stock }}</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">{{ product.title }}</h3>
+                
+                {% if product.description %}
+                <p class="card-text">{{ product.description }}</p>
+                {% endif %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Informações Básicas</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Categoria:</strong></td>
+                                <td>{{ product.category.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Marca:</strong></td>
+                                <td>{{ product.brand.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tamanho:</strong></td>
+                                <td>{{ product.size.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cor:</strong></td>
+                                <td>{{ product.color.name }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6>Preços e Códigos</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Preço de Custo:</strong></td>
+                                <td class="text-muted">R$ {{ product.cost_price|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Preço de Venda:</strong></td>
+                                <td class="text-success"><strong>R$ {{ product.selling_price|floatformat:2 }}</strong></td>
+                            </tr>
+                            {% if product.barcode %}
+                            <tr>
+                                <td><strong>Código de Barras:</strong></td>
+                                <td><code>{{ product.barcode }}</code></td>
+                            </tr>
+                            {% endif %}
+                            {% if product.sku %}
+                            <tr>
+                                <td><strong>SKU:</strong></td>
+                                <td><code>{{ product.sku }}</code></td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6>Controle de Estoque</h6>
+                        <div class="progress mb-2">
+                            {% widthratio product.quantity product.min_stock|add:10 100 as percentage %}
+                            <div class="progress-bar bg-{% if product.quantity <= product.min_stock %}danger{% elif product.quantity <= product.min_stock|add:5 %}warning{% else %}success{% endif %}" 
+                                 style="width: {{ percentage }}%">
+                                {{ product.quantity }} / {{ product.min_stock|add:10 }}
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            Estoque atual: {{ product.quantity }} | Mínimo: {{ product.min_stock }}
+                        </small>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6>Margem de Lucro</h6>
+                        {% with margin=product.selling_price|floatformat:2|add:0 cost=product.cost_price|floatformat:2|add:0 %}
+                            {% widthratio margin cost 100 as margin_percent %}
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-info" style="width: {% if margin_percent > 100 %}{{ margin_percent|add:-100 }}{% else %}0{% endif %}%">
+                                    {% if margin_percent > 100 %}{{ margin_percent|add:-100|floatformat:0 }}%{% else %}0%{% endif %}
+                                </div>
+                            </div>
+                            <small class="text-muted">
+                                Lucro: R$ {% widthratio product.selling_price 1 1 as selling %}{% widthratio product.cost_price 1 1 as cost %}{{ selling|add:cost|mul:-1|floatformat:2 }}
+                            </small>
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ações Rápidas -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6 class="card-title">Ações Rápidas</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <a href="{% url 'products:product_update' product.pk %}" class="btn btn-warning w-100 mb-2">
+                            <i class="fas fa-edit"></i>
+                            Editar Produto
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'products:product_delete' product.pk %}" 
+                           class="btn btn-danger w-100 mb-2"
+                           onclick="return confirm('Tem certeza que deseja excluir este produto?')">
+                            <i class="fas fa-trash"></i>
+                            Excluir Produto
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <small class="text-muted">
+        Produto criado em: {{ product.created_at|date:"d/m/Y H:i" }}
+        {% if product.updated_at != product.created_at %}
+            | Última atualização: {{ product.updated_at|date:"d/m/Y H:i" }}
+        {% endif %}
+    </small>
+</div>
+{% endblock %}

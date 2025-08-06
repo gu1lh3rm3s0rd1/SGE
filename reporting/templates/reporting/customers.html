@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Relatório de Clientes - SGE{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #fff, #f8f9fa);
+        border: 1px solid #dee2e6;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        transition: transform 0.2s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .customer-item {
+        transition: all 0.2s ease;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        padding: 15px;
+        background: white;
+        border: 1px solid #dee2e6;
+    }
+    
+    .customer-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .customer-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #007bff, #28a745);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-users text-info"></i>
+        Relatório de Clientes
+    </h2>
+    <div class="btn-group">
+        <a href="{% url 'reporting:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i>
+            Voltar
+        </a>
+        <a href="{% url 'customers:customer_create' %}" class="btn btn-info">
+            <i class="fas fa-user-plus"></i>
+            Novo Cliente
+        </a>
+    </div>
+</div>
+
+<!-- Filtro de Período -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Período</label>
+                <select name="period" class="form-select" onchange="this.form.submit()">
+                    <option value="7" {% if period == '7' %}selected{% endif %}>Últimos 7 dias</option>
+                    <option value="30" {% if period == '30' %}selected{% endif %}>Últimos 30 dias</option>
+                    <option value="90" {% if period == '90' %}selected{% endif %}>Últimos 90 dias</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <small class="text-muted">
+                    <i class="fas fa-calendar"></i>
+                    Analisando período de {{ start_date|date:"d/m/Y" }} até {{ end_date|date:"d/m/Y" }}
+                </small>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Estatísticas de Clientes -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="stats-card">
+            <div class="stats-number text-primary">{{ total_customers }}</div>
+            <small class="text-muted" style="color: #212529 !important;">Total de Clientes</small>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stats-card">
+            <div class="stats-number text-success">{{ new_customers }}</div>
+            <small class="text-muted" style="color: #212529 !important;">Novos Clientes no Período</small>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stats-card">
+            <div class="stats-number text-info">{{ top_customers|length }}</div>
+            <small class="text-muted" style="color: #212529 !important;">Clientes Ativos</small>
+        </div>
+    </div>
+</div>
+
+<!-- Clientes Mais Ativos -->
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-star"></i>
+            Clientes Mais Ativos
+        </h6>
+    </div>
+    <div class="card-body">
+        {% if top_customers %}
+            <div class="row">
+                {% for customer in top_customers %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="customer-item">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="customer-avatar me-3">
+                                {{ customer.name|first|upper }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ customer.name }}</h6>
+                                <small class="text-muted">
+                                    {% if customer.email %}
+                                        <i class="fas fa-envelope"></i> {{ customer.email }}
+                                    {% endif %}
+                                </small>
+                                {% if customer.phone %}
+                                    <br>
+                                    <small class="text-muted">
+                                        <i class="fas fa-phone"></i> {{ customer.phone }}
+                                    </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="text-primary fw-bold">{{ customer.total_sales }}</div>
+                                <small class="text-muted">Compras</small>
+                            </div>
+                            <div class="col-8">
+                                <div class="text-success fw-bold">R$ {{ customer.total_spent|floatformat:2|default:"0,00" }}</div>
+                                <small class="text-muted">Total Gasto</small>
+                            </div>
+                        </div>
+                        
+                        {% if customer.last_purchase %}
+                            <div class="mt-2 text-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock"></i>
+                                    Última compra: {{ customer.last_purchase|date:"d/m/Y" }}
+                                </small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if top_customers|length >= 20 %}
+                <div class="text-center mt-3">
+                    <small class="text-muted">Mostrando os 20 melhores clientes</small>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-users fa-3x mb-3"></i>
+                <h5>Nenhum cliente ativo encontrado</h5>
+                <p>Não há clientes com compras no período selecionado.</p>
+                <a href="{% url 'customers:customer_create' %}" class="btn btn-info">
+                    <i class="fas fa-user-plus"></i>
+                    Cadastrar Primeiro Cliente
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-bolt"></i>
+            Ações Rápidas
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'customers:customer_create' %}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-user-plus"></i>
+                Novo Cliente
+            </a>
+            <a href="{% url 'sales:quick_sale' %}" class="btn btn-outline-success btn-sm">
+                <i class="fas fa-cash-register"></i>
+                Nova Venda
+            </a>
+            <a href="{% url 'reporting:sales' %}" class="btn btn-outline-info btn-sm">
+                <i class="fas fa-chart-line"></i>
+                Relatório de Vendas
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Relatório de clientes carregado');
+    
+    // Adicionar efeitos de hover personalizados se necessário
+    const customerItems = document.querySelectorAll('.customer-item');
+    customerItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.borderColor = '#007bff';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.borderColor = '#dee2e6';
+        });
+    });
+});
+</script>
+{% endblock %}

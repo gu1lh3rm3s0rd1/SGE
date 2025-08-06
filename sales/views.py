@@ -18,7 +18,7 @@ from customers.models import Customer
 @login_required
 def sale_list(request):
     """Lista de vendas"""
-    sales = Sale.objects.all().select_related('customer', 'seller').order_by('-created_at')
+    sales = Sale.objects.all().select_related('customer', 'seller').order_by('-id')
     
     # Filtro por período
     date_filter = request.GET.get('date_filter')
@@ -60,7 +60,7 @@ def quick_sale(request):
         return process_quick_sale(request)
     
     form = QuickSaleForm()
-    recent_sales = Sale.objects.filter(seller=request.user).order_by('-created_at')[:5]
+    recent_sales = Sale.objects.filter(seller=request.user).order_by('-id')[:5]
     
     context = {
         'form': form,
@@ -122,9 +122,7 @@ def process_quick_sale(request):
                 sale_item.total_price = quantity * unit_price
                 sale_item.save()
                 
-                # Atualizar estoque
-                product.quantity -= quantity
-                product.save()
+                # O estoque será reduzido automaticamente via signal do Outflow
                 
                 total_amount += quantity * unit_price
             

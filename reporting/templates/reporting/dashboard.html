@@ -63,7 +63,7 @@
 <div class="filter-section">
     <form method="get" class="row g-3 align-items-end">
         <div class="col-md-3">
-            <label class="form-label fw-bold">Período de Análise</label>
+            <label class="form-label fw-bold" style="color: #212529 !important;">Período de Análise</label>
             <select name="period" class="form-select" onchange="this.form.submit()">
                 <option value="7" {% if period == '7' %}selected{% endif %}>Últimos 7 dias</option>
                 <option value="30" {% if period == '30' %}selected{% endif %}>Últimos 30 dias</option>
@@ -71,7 +71,7 @@
             </select>
         </div>
         <div class="col-md-3">
-            <small class="text-muted">
+            <small class="card-text" style="color: #212529 !important;">
                 <i class="fas fa-calendar"></i>
                 {{ start_date|date:"d/m/Y" }} até {{ end_date|date:"d/m/Y" }}
             </small>
@@ -87,8 +87,8 @@
                 <div class="report-icon text-success">
                     <i class="fas fa-chart-line"></i>
                 </div>
-                <h5 class="card-title" style="color: #000 !important;">Vendas</h5>
-                <p class="card-text text-muted">
+                <h5 class="card-title" style="color: #212529 !important;">Vendas</h5>
+                <p class="card-text" style="color: #212529 !important;">
                     Análise de vendas por período, formas de pagamento e vendedores
                 </p>
                 <span class="badge bg-success">Ver Relatório</span>
@@ -102,8 +102,8 @@
                 <div class="report-icon text-primary">
                     <i class="fas fa-tshirt"></i>
                 </div>
-                <h5 class="card-title">Produtos</h5>
-                <p class="card-text text-muted">
+                <h5 class="card-title" style="color: #212529 !important;">Produtos</h5>
+                <p class="card-text" style="color: #212529 !important;">
                     Produtos mais vendidos, análise de performance e tendências
                 </p>
                 <span class="badge bg-primary">Ver Relatório</span>
@@ -117,8 +117,8 @@
                 <div class="report-icon text-warning">
                     <i class="fas fa-boxes"></i>
                 </div>
-                <h5 class="card-title">Estoque</h5>
-                <p class="card-text text-muted">
+                <h5 class="card-title" style="color: #212529 !important;">Estoque</h5>
+                <p class="card-text" style="color: #212529 !important;">
                     Níveis de estoque, produtos em falta e alertas de reposição
                 </p>
                 <span class="badge bg-warning">Ver Relatório</span>
@@ -132,8 +132,8 @@
                 <div class="report-icon text-info">
                     <i class="fas fa-users"></i>
                 </div>
-                <h5 class="card-title">Clientes</h5>
-                <p class="card-text text-muted">
+                <h5 class="card-title" style="color: #212529 !important;">Clientes</h5>
+                <p class="card-text" style="color: #212529 !important;">
                     Análise de clientes, compras e comportamento de consumo
                 </p>
                 <span class="badge bg-info">Ver Relatório</span>
@@ -157,28 +157,28 @@
                     <div class="col-md-3">
                         <div class="stats-card">
                             <div class="stats-number text-success" id="total-sales">0</div>
-                            <small class="text-muted">Vendas Realizadas</small>
+                            <small class="card-text" style="color: #212529 !important;">Vendas Realizadas</small>
                         </div>
                     </div>
                     
                     <div class="col-md-3">
                         <div class="stats-card">
                             <div class="stats-number text-primary" id="total-revenue">R$ 0,00</div>
-                            <small class="text-muted">Faturamento</small>
+                            <small class="card-text" style="color: #212529 !important;">Faturamento</small>
                         </div>
                     </div>
                     
                     <div class="col-md-3">
                         <div class="stats-card">
                             <div class="stats-number text-warning" id="low-stock">0</div>
-                            <small class="text-muted">Produtos em Baixo Estoque</small>
+                            <small class="card-text" style="color: #212529 !important;">Produtos em Baixo Estoque</small>
                         </div>
                     </div>
                     
                     <div class="col-md-3">
                         <div class="stats-card">
                             <div class="stats-number text-info" id="total-customers">0</div>
-                            <small class="text-muted">Clientes Cadastrados</small>
+                            <small class="card-text" style="color: #212529 !important;">Clientes Cadastrados</small>
                         </div>
                     </div>
                 </div>
@@ -199,7 +199,7 @@
             </div>
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2">
-                    <a href="{% url 'product_create' %}" class="btn btn-outline-primary btn-sm">
+                    <a href="{% url 'products:product_create' %}" class="btn btn-outline-primary btn-sm">
                         <i class="fas fa-plus"></i>
                         Novo Produto
                     </a>
@@ -224,22 +224,120 @@
 
 {% block extra_js %}
 <script>
-// Carregar estatísticas via AJAX para melhor performance
+// Carregar estatísticas reais via AJAX
 document.addEventListener('DOMContentLoaded', function() {
     loadQuickStats();
 });
 
 function loadQuickStats() {
-    // Aqui você pode fazer chamadas AJAX para carregar as estatísticas
-    // Por enquanto, vamos simular com dados estáticos
+    // Obter o período atual da URL ou usar padrão
+    const urlParams = new URLSearchParams(window.location.search);
+    const period = urlParams.get('period') || '30';
     
-    // Simular carregamento
-    setTimeout(function() {
-        document.getElementById('total-sales').textContent = '45';
-        document.getElementById('total-revenue').textContent = 'R$ 12.450,00';
-        document.getElementById('low-stock').textContent = '8';
-        document.getElementById('total-customers').textContent = '127';
-    }, 500);
+    // Mostrar indicadores de carregamento
+    document.getElementById('total-sales').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    document.getElementById('total-revenue').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    document.getElementById('low-stock').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    document.getElementById('total-customers').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    // Fazer requisição para a API
+    fetch(`/reports/api/dashboard-stats/?period=${period}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro na resposta da API');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Atualizar os elementos com os dados reais
+            document.getElementById('total-sales').textContent = data.total_sales;
+            document.getElementById('total-revenue').textContent = data.total_revenue;
+            document.getElementById('low-stock').textContent = data.low_stock;
+            document.getElementById('total-customers').textContent = data.total_customers;
+            
+            // Adicionar classes de estilo baseadas nos valores
+            updateStylesBasedOnData(data);
+            
+            // Adicionar animação de contagem
+            animateNumbers();
+        })
+        .catch(error => {
+            console.error('Erro ao carregar estatísticas:', error);
+            
+            // Mostrar valores de fallback em caso de erro
+            document.getElementById('total-sales').textContent = '0';
+            document.getElementById('total-revenue').textContent = 'R$ 0,00';
+            document.getElementById('low-stock').textContent = '0';
+            document.getElementById('total-customers').textContent = '0';
+            
+            // Mostrar notificação de erro (opcional)
+            showErrorNotification();
+        });
 }
+
+function animateNumbers() {
+    // Adicionar efeito de highlight nos números atualizados
+    const elements = ['total-sales', 'total-revenue', 'low-stock', 'total-customers'];
+    
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        element.style.transition = 'all 0.3s ease';
+        element.style.transform = 'scale(1.1)';
+        element.style.color = '#28a745';
+        
+        setTimeout(() => {
+            element.style.transform = 'scale(1)';
+            element.style.color = '';
+        }, 300);
+    });
+}
+
+function updateStylesBasedOnData(data) {
+    // Destacar produtos com baixo estoque se houver
+    const lowStockElement = document.getElementById('low-stock');
+    if (data.low_stock > 0) {
+        lowStockElement.parentElement.style.background = 'linear-gradient(135deg, #fff3cd, #ffeaa7)';
+        lowStockElement.style.color = '#856404';
+    } else {
+        lowStockElement.parentElement.style.background = '';
+        lowStockElement.style.color = '';
+    }
+    
+    // Destacar faturamento se for zero
+    const revenueElement = document.getElementById('total-revenue');
+    if (data.total_sales === 0) {
+        revenueElement.parentElement.style.background = 'linear-gradient(135deg, #f8d7da, #f5c6cb)';
+        revenueElement.style.color = '#721c24';
+    } else {
+        revenueElement.parentElement.style.background = '';
+        revenueElement.style.color = '';
+    }
+}
+
+function showErrorNotification() {
+    // Criar uma notificação discreta de erro
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-warning alert-dismissible fade show position-fixed';
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+    notification.innerHTML = `
+        <i class="fas fa-exclamation-triangle"></i>
+        <small>Não foi possível carregar as estatísticas em tempo real. Dados podem estar desatualizados.</small>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remover após 5 segundos
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Recarregar estatísticas quando o período mudar
+window.addEventListener('beforeunload', function() {
+    // Cancelar requisições pendentes se necessário
+});
 </script>
 {% endblock %}

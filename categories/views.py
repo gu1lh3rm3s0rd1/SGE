@@ -13,7 +13,7 @@ class CategoryListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     permission_required = 'categories.view_category'
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().order_by('-id')
         name = self.request.GET.get('name')
 
         if name:
@@ -52,10 +52,10 @@ class CategoryDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView
 
 
 class CategoryCreateListAPIView(generics.ListCreateAPIView):
-    queryset = models.Category.objects.all()
+    queryset = models.Category.objects.all().order_by('-id')
     serializer_class = serializers.CategorySerializer
 
 
 class CategoryRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = models.Category.objects.all()
+    queryset = models.Category.objects.all().order_by('-id')
     serializer_class = serializers.CategorySerializer

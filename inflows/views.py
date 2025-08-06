@@ -13,7 +13,7 @@ class InflowListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     permission_required = 'inflows.view_inflow'
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().order_by('-id')
         product = self.request.GET.get('product')
 
         if product:
@@ -37,10 +37,10 @@ class InflowDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
 
 
 class InflowCreateListAPIView(generics.ListCreateAPIView):
-    queryset = models.Inflow.objects.all()
+    queryset = models.Inflow.objects.all().order_by('-id')
     serializer_class = serializers.InflowSerializer
 
 
 class InflowRetrieveAPIView(generics.RetrieveAPIView):
-    queryset = models.Inflow.objects.all()
+    queryset = models.Inflow.objects.all().order_by('-id')
     serializer_class = serializers.InflowSerializer

@@ -125,14 +125,14 @@
         <!-- Coluna Principal - Interface de Venda -->
         <div class="col-md-8">
             <div class="calculator-container">
-                <h2 class="mb-4 text-center">
+                <h2 class="mb-4 text-center" style="color: #212529 !important;">
                     <i class="fas fa-cash-register text-primary"></i>
                     Venda Rápida
                 </h2>
                 
                 <!-- Busca de Produto -->
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Adicionar Produto</label>
+                    <label class="form-label fw-bold" style="color: #212529 !important;">Adicionar Produto</label>
                     <div class="position-relative">
                         <input type="text" 
                                id="product-search" 
@@ -165,7 +165,7 @@
                 
                 <!-- Desconto -->
                 <div class="mb-3">
-                    <label class="form-label">Desconto (R$)</label>
+                    <label class="form-label" style="color: #212529 !important;">Desconto (R$)</label>
                     <input type="number" id="discount-input" class="form-control" 
                            min="0" step="0.01" value="0" 
                            placeholder="0,00">
@@ -173,18 +173,18 @@
                 
                 <!-- Forma de Pagamento -->
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Forma de Pagamento</label>
+                    <label class="form-label fw-bold" style="color: #212529 !important;">Forma de Pagamento</label>
                     <div class="payment-options">
-                        <button type="button" class="payment-btn active" data-payment="dinheiro">
+                        <button type="button" class="payment-btn active" style="color: #212529 !important;" data-payment="dinheiro">
                             <i class="fas fa-money-bill-wave"></i><br>Dinheiro
                         </button>
-                        <button type="button" class="payment-btn" data-payment="cartao_debito">
+                        <button type="button" class="payment-btn" style="color: #212529 !important;" data-payment="cartao_debito">
                             <i class="fas fa-credit-card"></i><br>Débito
                         </button>
-                        <button type="button" class="payment-btn" data-payment="cartao_credito">
+                        <button type="button" class="payment-btn" style="color: #212529 !important;" data-payment="cartao_credito">
                             <i class="fas fa-credit-card"></i><br>Crédito
                         </button>
-                        <button type="button" class="payment-btn" data-payment="pix">
+                        <button type="button" class="payment-btn" style="color: #212529 !important;" data-payment="pix">
                             <i class="fas fa-qrcode"></i><br>PIX
                         </button>
                     </div>
@@ -238,20 +238,20 @@
             <!-- Vendas Recentes -->
             {% if recent_sales %}
             <div class="recent-sales">
-                <h6 class="mb-3">
-                    <i class="fas fa-history"></i> Vendas Recentes
+                <h6 class="mb-3" style="color: #212529 !important;">
+                    <i class="fas fa-history" style="color: #212529 !important;"></i> Vendas Recentes
                 </h6>
                 {% for sale in recent_sales %}
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div>
-                        <small class="text-muted">#{{ sale.id }}</small>
+                        <small class="card-text" style="color: #212529 !important;">#{{ sale.id }}</small>
                         <br>
-                        <small>{{ sale.created_at|date:"d/m H:i" }}</small>
+                        <small style="color: #212529 !important;">{{ sale.created_at|date:"d/m H:i" }}</small>
                     </div>
-                    <div class="text-end">
+                    <div class="text-end" style="color: #212529 !important;">
                         <strong>R$ {{ sale.final_amount|floatformat:2 }}</strong>
                         <br>
-                        <small class="text-muted">{{ sale.get_payment_method_display }}</small>
+                        <small class="card-text" style="color: #212529 !important;">{{ sale.get_payment_method_display }}</small>
                     </div>
                 </div>
                 {% endfor %}
@@ -372,11 +372,11 @@ function showProductSuggestions(products) {
                  onclick="addProductToCart(${product.id}, '${product.display_name}', ${product.selling_price})">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <strong>${product.title}</strong>
+                        <strong style="color: #212529 !important;">${product.title}</strong>
                         <br>
-                        <small class="text-muted">${product.size} - ${product.color}</small>
+                        <small class="card-text" style="color: #212529 !important;">${product.size} - ${product.color}</small>
                         <br>
-                        <small class="text-info">${product.stock_info}</small>
+                        <small class="text-success">${product.stock_info}</small>
                     </div>
                     <div class="text-end">
                         <strong class="text-success">R$ ${product.selling_price.toFixed(2)}</strong>
@@ -434,9 +434,9 @@ function updateCartDisplay() {
     if (cart.length === 0) {
         cartContainer.innerHTML = `
             <div class="text-center text-muted py-4">
-                <i class="fas fa-shopping-cart fa-3x mb-3"></i>
-                <p>Carrinho vazio</p>
-                <small>Use o leitor de código de barras ou busque produtos pelo nome</small>
+                <i class="fas fa-shopping-cart fa-3x mb-3" style="color: #212529 !important;"></i>
+                <p style="color: #212529 !important;">Carrinho vazio</p>
+                <small style="color: #212529 !important;">Use o leitor de código de barras ou busque produtos pelo nome</small>
             </div>
         `;
     } else {
@@ -447,14 +447,14 @@ function updateCartDisplay() {
                 <div class="cart-item">
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="flex-grow-1">
-                            <strong>${item.productName}</strong>
+                            <strong style="color: #212529 !important;">${item.productName}</strong>
                             <br>
-                            <small class="text-muted">R$ ${item.price.toFixed(2)} cada</small>
+                            <small class="card-text" style="color: #212529 !important;">R$ ${item.price.toFixed(2)} cada</small>
                         </div>
                         <div class="quantity-controls">
                             <button class="btn btn-outline-primary quantity-btn" 
                                     onclick="changeQuantity(${index}, -1)">-</button>
-                            <span class="mx-2 fw-bold">${item.quantity}</span>
+                            <span class="mx-2 fw-bold" style="color: #212529 !important;">${item.quantity}</span>
                             <button class="btn btn-outline-primary quantity-btn" 
                                     onclick="changeQuantity(${index}, 1)">+</button>
                         </div>

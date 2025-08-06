@@ -14,7 +14,7 @@ class OutflowListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     permission_required = 'outflows.view_outflow'
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().order_by('-id')
         product = self.request.GET.get('product')
 
         if product:
@@ -44,10 +44,10 @@ class OutflowDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView)
 
 
 class OutflowCreateListAPIView(generics.ListCreateAPIView):
-    queryset = models.Outflow.objects.all()
+    queryset = models.Outflow.objects.all().order_by('-id')
     serializer_class = serializers.OutflowSerializer
 
 
 class OutflowRetrieveAPIView(generics.RetrieveAPIView):
-    queryset = models.Outflow.objects.all()
+    queryset = models.Outflow.objects.all().order_by('-id')
     serializer_class = serializers.OutflowSerializer

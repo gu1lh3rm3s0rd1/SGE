@@ -125,22 +125,22 @@
 <div class="stats-grid">
     <div class="stat-card">
         <div class="stat-number text-primary">{{ total_products }}</div>
-        <small class="text-muted">Total de Produtos</small>
+        <small class="text-muted" style="color: #212529 !important;">Total de Produtos</small>
     </div>
     
     <div class="stat-card">
         <div class="stat-number text-success">R$ {{ total_value|floatformat:2 }}</div>
-        <small class="text-muted">Valor do Estoque</small>
+        <small class="text-muted" style="color: #212529 !important;">Valor do Estoque</small>
     </div>
     
     <div class="stat-card">
         <div class="stat-number text-warning">{{ low_stock_count }}</div>
-        <small class="text-muted">Baixo Estoque</small>
+        <small class="text-muted" style="color: #212529 !important;">Baixo Estoque</small>
     </div>
     
     <div class="stat-card">
         <div class="stat-number text-danger">{{ out_of_stock_count }}</div>
-        <small class="text-muted">Sem Estoque</small>
+        <small class="text-muted" style="color: #212529 !important;">Sem Estoque</small>
     </div>
 </div>
 
@@ -243,7 +243,7 @@
                 <i class="fas fa-boxes fa-3x mb-3"></i>
                 <h5>Nenhum produto encontrado</h5>
                 <p>Não há produtos que correspondam aos filtros aplicados.</p>
-                <a href="{% url 'product_create' %}" class="btn btn-primary">
+                <a href="{% url 'products:product_create' %}" class="btn btn-primary">
                     <i class="fas fa-plus"></i>
                     Cadastrar Produto
                 </a>
@@ -262,7 +262,7 @@
     </div>
     <div class="card-body">
         <div class="d-flex flex-wrap gap-2">
-            <a href="{% url 'product_create' %}" class="btn btn-outline-primary btn-sm">
+            <a href="{% url 'products:product_create' %}" class="btn btn-outline-primary btn-sm">
                 <i class="fas fa-plus"></i>
                 Novo Produto
             </a>

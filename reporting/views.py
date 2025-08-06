@@ -1,11 +1,9 @@
 from django.shortcuts import render
-
-from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Count, Q, F, Max
 from django.utils import timezone
+from django.http import JsonResponse
 from datetime import datetime, timedelta
-from collections import defaultdict
 
 from sales.models import Sale, SaleItem
 from products.models import Product
@@ -127,6 +125,9 @@ def sales_report(request):
         total=Sum('discount')
     )['total'] or 0
     
+    # Calcular ticket médio
+    average_ticket = total_revenue / total_sales if total_sales > 0 else 0
+    
     # Vendas por dia
     daily_sales = {}
     for sale in sales_period.values('created_at__date').annotate(
@@ -135,7 +136,8 @@ def sales_report(request):
     ).order_by('created_at__date'):
         daily_sales[sale['created_at__date']] = {
             'count': sale['count'],
-            'revenue': sale['revenue'] or 0
+            'revenue': sale['revenue'] or 0,
+            'average_ticket': (sale['revenue'] or 0) / sale['count'] if sale['count'] > 0 else 0
         }
     
     # Vendas por forma de pagamento
@@ -161,6 +163,7 @@ def sales_report(request):
         'total_sales': total_sales,
         'total_revenue': total_revenue,
         'total_discount': total_discount,
+        'average_ticket': average_ticket,
         'daily_sales': daily_sales,
         'payment_stats': payment_stats,
         'seller_stats': seller_stats,
@@ -273,3 +276,56 @@ def customers_report(request):
     }
     
     return render(request, 'reporting/customers.html', context)
+
+
+@login_required
+def dashboard_stats_api(request):
+    """API para estatísticas do dashboard"""
+    
+    # Período
+    period = request.GET.get('period', '30')
+    end_date = timezone.now().date()
+    
+    if period == '7':
+        start_date = end_date - timedelta(days=7)
+    elif period == '30':
+        start_date = end_date - timedelta(days=30)
+    elif period == '90':
+        start_date = end_date - timedelta(days=90)
+    else:
+        start_date = end_date - timedelta(days=30)
+    
+    # Vendas no período
+    sales_period = Sale.objects.filter(
+        created_at__date__gte=start_date,
+        created_at__date__lte=end_date
+    )
+    
+    # Total de vendas
+    total_sales = sales_period.count()
+    
+    # Faturamento total
+    total_revenue = sales_period.aggregate(
+        total=Sum('final_amount')
+    )['total'] or 0
+    
+    # Produtos com baixo estoque
+    low_stock_count = Product.objects.filter(
+        is_active=True,
+        quantity__lte=F('min_stock')
+    ).count()
+    
+    # Total de clientes
+    total_customers = Customer.objects.count()
+    
+    # Formatar dados para resposta
+    data = {
+        'total_sales': total_sales,
+        'total_revenue': f"R$ {total_revenue:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+        'low_stock': low_stock_count,
+        'total_customers': total_customers,
+        'period': period,
+        'period_text': f"{period} dias"
+    }
+    
+    return JsonResponse(data)

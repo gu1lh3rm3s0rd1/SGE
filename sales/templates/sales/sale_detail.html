@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalhes da Venda #{{ sale.id }} - SGE{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sale-header {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        border: 1px solid #dee2e6;
+        height: 100%;
+    }
+    
+    .item-row {
+        border-bottom: 1px solid #f8f9fa;
+        padding: 15px 0;
+        transition: background-color 0.2s ease;
+    }
+    
+    .item-row:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .item-row:last-child {
+        border-bottom: none;
+    }
+    
+    .payment-badge {
+        font-size: 1rem;
+        padding: 8px 15px;
+        border-radius: 20px;
+    }
+    
+    .status-badge {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+        border-radius: 15px;
+    }
+    
+    .total-summary {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+    }
+    
+    .action-buttons {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 25px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Cabeçalho da Venda -->
+    <div class="sale-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-receipt"></i>
+                    Venda #{{ sale.id }}
+                </h2>
+                <p class="mb-0">
+                    <i class="fas fa-calendar"></i>
+                    {{ sale.created_at|date:"d/m/Y" }} às {{ sale.created_at|date:"H:i" }}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="mb-2">
+                    <span class="status-badge bg-success">
+                        <i class="fas fa-check-circle"></i>
+                        Finalizada
+                    </span>
+                </div>
+                <h4 class="mb-0">
+                    <strong>R$ {{ sale.final_amount|floatformat:2 }}</strong>
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Informações da Venda -->
+        <div class="col-md-4">
+            <div class="info-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-info-circle text-primary"></i>
+                    Informações da Venda
+                </h5>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Cliente:</label>
+                    <div>
+                        {% if sale.customer %}
+                            <i class="fas fa-user text-info"></i>
+                            {{ sale.customer.name }}
+                            {% if sale.customer.phone %}
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-phone"></i>
+                                    {{ sale.customer.phone }}
+                                </small>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">
+                                <i class="fas fa-user-slash"></i>
+                                Cliente avulso
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Vendedor:</label>
+                    <div>
+                        <i class="fas fa-user-tie text-success"></i>
+                        {% if sale.seller.first_name %}
+                            {{ sale.seller.first_name }} {{ sale.seller.last_name }}
+                        {% else %}
+                            {{ sale.seller.username }}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Forma de Pagamento:</label>
+                    <div>
+                        <span class="payment-badge badge 
+                            {% if sale.payment_method == 'cash' %}bg-success
+                            {% elif sale.payment_method == 'card' %}bg-primary
+                            {% elif sale.payment_method == 'pix' %}bg-warning
+                            {% else %}bg-secondary{% endif %}">
+                            {% if sale.payment_method == 'cash' %}
+                                <i class="fas fa-money-bill-wave"></i> Dinheiro
+                            {% elif sale.payment_method == 'card' %}
+                                <i class="fas fa-credit-card"></i> Cartão
+                            {% elif sale.payment_method == 'pix' %}
+                                <i class="fas fa-qrcode"></i> PIX
+                            {% else %}
+                                <i class="fas fa-money-bill"></i> {{ sale.get_payment_method_display }}
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                {% if sale.installments > 1 %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Parcelas:</label>
+                    <div>
+                        <span class="badge bg-info">
+                            <i class="fas fa-calendar-alt"></i>
+                            {{ sale.installments }}x
+                        </span>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if sale.notes %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Observações:</label>
+                    <div class="text-muted">
+                        <i class="fas fa-sticky-note"></i>
+                        {{ sale.notes }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Itens da Venda -->
+        <div class="col-md-8">
+            <div class="info-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-shopping-cart text-primary"></i>
+                    Itens da Venda ({{ items|length }} item{{ items|length|pluralize }})
+                </h5>
+                
+                {% for item in items %}
+                <div class="item-row">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h6 class="mb-1">{{ item.product.title }}</h6>
+                            <div class="text-muted">
+                                {% if item.product.brand %}
+                                    <span class="badge bg-light text-dark me-1">{{ item.product.brand.name }}</span>
+                                {% endif %}
+                                {% if item.product.size %}
+                                    <span class="badge bg-light text-dark me-1">{{ item.product.size.name }}</span>
+                                {% endif %}
+                                {% if item.product.color %}
+                                    <span class="badge bg-light text-dark">{{ item.product.color.name }}</span>
+                                {% endif %}
+                            </div>
+                            {% if item.product.sku %}
+                                <small class="text-muted d-block mt-1">
+                                    SKU: {{ item.product.sku }}
+                                </small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <div class="fw-bold">{{ item.quantity }}</div>
+                            <small class="text-muted">unidade{{ item.quantity|pluralize }}</small>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <div class="fw-bold">R$ {{ item.unit_price|floatformat:2 }}</div>
+                            <small class="text-muted">unitário</small>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <div class="fw-bold text-success">R$ {{ item.total_price|floatformat:2 }}</div>
+                            <small class="text-muted">total</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo Financeiro -->
+    <div class="row g-4 mt-3">
+        <div class="col-md-8"></div>
+        <div class="col-md-4">
+            <div class="total-summary">
+                <h5 class="mb-3">
+                    <i class="fas fa-calculator"></i>
+                    Resumo Financeiro
+                </h5>
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Subtotal:</span>
+                    <strong>R$ {{ sale.total_amount|floatformat:2 }}</strong>
+                </div>
+                
+                {% if sale.discount > 0 %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Desconto:</span>
+                    <strong class="text-warning">- R$ {{ sale.discount|floatformat:2 }}</strong>
+                </div>
+                {% endif %}
+                
+                <hr class="my-3" style="border-color: rgba(255,255,255,0.3);">
+                
+                <div class="d-flex justify-content-between">
+                    <h5 class="mb-0">Total Final:</h5>
+                    <h4 class="mb-0"><strong>R$ {{ sale.final_amount|floatformat:2 }}</strong></h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botões de Ação -->
+    <div class="action-buttons">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <a href="{% url 'sales:sale_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Voltar à Lista
+                </a>
+            </div>
+            <div>
+                <a href="{% url 'sales:sale_receipt' sale.id %}" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-receipt"></i>
+                    Ver Recibo
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Adicionar tooltips nos badges
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Melhorar a experiência ao imprimir
+    window.addEventListener('beforeprint', function() {
+        document.querySelector('.action-buttons').style.display = 'none';
+    });
+    
+    window.addEventListener('afterprint', function() {
+        document.querySelector('.action-buttons').style.display = 'block';
+    });
+});
+</script>
+{% endblock %}

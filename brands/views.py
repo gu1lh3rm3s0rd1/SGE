@@ -13,7 +13,7 @@ class BrandListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     permission_required = 'brands.view_brand'
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().order_by('-id')
         name = self.request.GET.get('name')
 
         if name:
@@ -52,10 +52,10 @@ class BrandDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 
 
 class BrandCreateListAPIView(generics.ListCreateAPIView):
-    queryset = models.Brand.objects.all()
+    queryset = models.Brand.objects.all().order_by('-id')
     serializer_class = serializers.BrandSerializer
 
 
 class BrandRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = models.Brand.objects.all()
+    queryset = models.Brand.objects.all().order_by('-id')
     serializer_class = serializers.BrandSerializer

@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Produto - SGE{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Confirmar Exclusão
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <strong>Atenção!</strong> Esta ação não pode ser desfeita.
+                </div>
+                
+                <p>Você tem certeza que deseja excluir o produto:</p>
+                
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" class="img-fluid rounded" alt="{{ product.title }}">
+                                {% else %}
+                                    <div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="height: 100px;">
+                                        <i class="fas fa-image fa-2x text-white"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <h6 class="card-title" style="color: #212529 !important;">{{ product.title }}</h6>
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <small class="text-muted" style="color: #212529 !important;">Categoria: {{ product.category.name }}</small><br>
+                                        <small class="text-muted" style="color: #212529 !important;">Marca: {{ product.brand.name }}</small><br>
+                                        <small class="text-muted" style="color: #212529 !important;">Tamanho: {{ product.size.name }}</small><br>
+                                        <small class="text-muted" style="color: #212529 !important;">Cor: {{ product.color.name }}</small>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <small class="text-muted" style="color: #212529 !important;">Preço: R$ {{ product.selling_price|floatformat:2 }}</small><br>
+                                        <small class="text-muted" style="color: #212529 !important;">Estoque: {{ product.quantity }} unidades</small><br>
+                                        {% if product.barcode %}
+                                            <small class="text-muted" style="color: #212529 !important;">Código: {{ product.barcode }}</small><br>
+                                        {% endif %}
+                                        {% if product.sku %}
+                                            <small class="text-muted" style="color: #212529 !important;">SKU: {{ product.sku }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if product.quantity > 0 %}
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Observação:</strong> Este produto possui {{ product.quantity }} unidades em estoque.
+                </div>
+                {% endif %}
+                
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'products:product_detail' product.pk %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i>
+                            Sim, Excluir Produto
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Adicionar confirmação extra
+    const deleteForm = document.querySelector('form');
+    deleteForm.addEventListener('submit', function(e) {
+        if (!confirm('Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

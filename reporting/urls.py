@@ -12,4 +12,7 @@ urlpatterns = [
     path('sales/', views.sales_report, name='sales'),
     path('stock/', views.stock_report, name='stock'),
     path('customers/', views.customers_report, name='customers'),
+    
+    # API para estatísticas
+    path('api/dashboard-stats/', views.dashboard_stats_api, name='dashboard_stats_api'),
 ]
