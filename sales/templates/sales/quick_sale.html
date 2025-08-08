@@ -108,6 +108,22 @@
         margin-top: 20px;
     }
     
+    .suggestion-item {
+        transition: background-color 0.2s ease;
+    }
+    
+    .suggestion-item:hover {
+        background-color: #f8f9fa !important;
+    }
+    
+    #selected-customer {
+        min-height: 40px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+    
     @media (max-width: 768px) {
         .action-buttons {
             grid-template-columns: 1fr;
@@ -132,16 +148,26 @@
                 
                 <!-- Busca de Produto -->
                 <div class="mb-4">
-                    <label class="form-label fw-bold" style="color: #212529 !important;">Adicionar Produto</label>
+                    <label class="form-label fw-bold" style="color: #212529 !important;">
+                        <i class="fas fa-barcode text-primary"></i>
+                        Adicionar Produto
+                    </label>
                     <div class="position-relative">
                         <input type="text" 
                                id="product-search" 
                                class="form-control product-search" 
-                               placeholder="Digite o código de barras ou busque pelo nome..."
+                               placeholder="🔍 Digite código de barras, SKU ou nome do produto..."
                                autocomplete="off"
                                autofocus>
+                        <div class="position-absolute top-50 end-0 translate-middle-y me-3">
+                            <i class="fas fa-barcode text-muted" id="barcode-icon"></i>
+                        </div>
                         <div id="product-suggestions" class="position-absolute w-100 bg-white border rounded shadow" style="z-index: 1000; display: none;"></div>
                     </div>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        Use seu leitor de código de barras ou digite manualmente
+                    </small>
                 </div>
                 
                 <!-- Carrinho de Compras -->
@@ -212,10 +238,19 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    <input type="text" id="customer-search" class="form-control mb-2" 
-                           placeholder="Buscar cliente...">
+                    <div class="position-relative">
+                        <input type="text" id="customer-search" class="form-control mb-2" 
+                               placeholder="Buscar cliente por nome, email ou telefone..."
+                               autocomplete="off">
+                        <div id="customer-suggestions" class="position-absolute w-100 bg-white border rounded shadow" style="z-index: 1000; display: none;"></div>
+                    </div>
                     <div id="selected-customer" class="text-muted">
-                        <small>Cliente avulso</small>
+                        <small style="color: #212529 !important;"><i class="fas fa-user-slash"></i> Cliente avulso</small>
+                    </div>
+                    <div class="mt-2">
+                        <button type="button" id="add-new-customer" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="fas fa-user-plus"></i> Novo Cliente
+                        </button>
                     </div>
                 </div>
             </div>
@@ -230,6 +265,7 @@
                 <div class="card-body">
                     <small class="d-block"><kbd>F1</kbd> Buscar produto</small>
                     <small class="d-block"><kbd>F2</kbd> Novo cliente</small>
+                    <small class="d-block"><kbd>F3</kbd> Buscar cliente</small>
                     <small class="d-block"><kbd>F9</kbd> Finalizar venda</small>
                     <small class="d-block"><kbd>Esc</kbd> Limpar carrinho</small>
                 </div>
@@ -257,6 +293,54 @@
                 {% endfor %}
             </div>
             {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Novo Cliente -->
+<div class="modal fade" id="newCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus"></i> Novo Cliente
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="new-customer-form">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nome *</label>
+                        <input type="text" id="customer-name" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Telefone</label>
+                                <input type="tel" id="customer-phone" class="form-control" 
+                                       placeholder="(11) 99999-9999">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" id="customer-email" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">CPF</label>
+                        <input type="text" id="customer-cpf" class="form-control" 
+                               placeholder="000.000.000-00">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="save-customer" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Salvar Cliente
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -300,10 +384,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Event listeners
 function initializeEventListeners() {
-    // Busca de produto
+    // Busca de produto com suporte a leitor de código de barras
     const productSearch = document.getElementById('product-search');
     productSearch.addEventListener('input', debounce(searchProducts, 300));
     productSearch.addEventListener('keydown', handleProductSearchKeydown);
+    
+    // Detectar entrada de código de barras (leitores USB)
+    productSearch.addEventListener('input', handleBarcodeInput);
+    
+    // Busca de cliente
+    const customerSearch = document.getElementById('customer-search');
+    customerSearch.addEventListener('input', debounce(searchCustomers, 300));
+    customerSearch.addEventListener('keydown', handleCustomerSearchKeydown);
     
     // Desconto
     document.getElementById('discount-input').addEventListener('input', updateCartDisplay);
@@ -319,6 +411,10 @@ function initializeEventListeners() {
     document.getElementById('clear-cart').addEventListener('click', clearCart);
     document.getElementById('finalize-sale').addEventListener('click', showSaleConfirmation);
     document.getElementById('confirm-sale').addEventListener('click', processSale);
+    
+    // Cliente
+    document.getElementById('add-new-customer').addEventListener('click', showNewCustomerModal);
+    document.getElementById('save-customer').addEventListener('click', saveNewCustomer);
 }
 
 // Atalhos de teclado
@@ -327,6 +423,12 @@ function initializeKeyboardShortcuts() {
         if (e.key === 'F1') {
             e.preventDefault();
             document.getElementById('product-search').focus();
+        } else if (e.key === 'F2') {
+            e.preventDefault();
+            showNewCustomerModal();
+        } else if (e.key === 'F3') {
+            e.preventDefault();
+            document.getElementById('customer-search').focus();
         } else if (e.key === 'F9') {
             e.preventDefault();
             showSaleConfirmation();
@@ -404,6 +506,109 @@ function handleProductSearchKeydown(e) {
             suggestions[0].click();
         }
     }
+}
+
+// Detectar e processar entrada de código de barras
+let barcodeTimeout;
+let barcodeBuffer = '';
+
+function handleBarcodeInput(e) {
+    const input = e.target.value;
+    
+    // Detectar se é entrada rápida de código de barras (geralmente > 8 caracteres digitados rapidamente)
+    if (input.length >= 8 && isNumeric(input)) {
+        // Mostrar indicador visual
+        showBarcodeDetected();
+        
+        // Buscar produto automaticamente após pequeno delay
+        clearTimeout(barcodeTimeout);
+        barcodeTimeout = setTimeout(() => {
+            searchProductByBarcode(input);
+        }, 100);
+    }
+}
+
+// Verificar se string é numérica (códigos de barras são geralmente numéricos)
+function isNumeric(str) {
+    return /^\d+$/.test(str);
+}
+
+// Mostrar indicador de código de barras detectado
+function showBarcodeDetected() {
+    const icon = document.getElementById('barcode-icon');
+    const input = document.getElementById('product-search');
+    
+    // Animação visual
+    icon.classList.remove('fa-barcode');
+    icon.classList.add('fa-check-circle', 'text-success');
+    input.style.borderColor = '#28a745';
+    
+    // Resetar após 2 segundos
+    setTimeout(() => {
+        icon.classList.remove('fa-check-circle', 'text-success');
+        icon.classList.add('fa-barcode');
+        icon.classList.add('text-muted');
+        input.style.borderColor = '';
+    }, 2000);
+}
+
+// Buscar produto especificamente por código de barras
+function searchProductByBarcode(barcode) {
+    fetch(`/sales/api/products/?q=${encodeURIComponent(barcode)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.products && data.products.length > 0) {
+                // Se encontrou exatamente um produto, adicionar automaticamente
+                if (data.products.length === 1) {
+                    const product = data.products[0];
+                    addProductToCart(product.id, product.display_name, product.selling_price);
+                    
+                    // Feedback sonoro/visual
+                    showSuccessNotification(`Produto adicionado: ${product.title}`);
+                } else {
+                    // Se encontrou vários, mostrar sugestões
+                    showProductSuggestions(data.products);
+                }
+            } else {
+                // Código não encontrado
+                showErrorNotification(`Código de barras não encontrado: ${barcode}`);
+            }
+        })
+        .catch(error => {
+            console.error('Erro na busca por código de barras:', error);
+            showErrorNotification('Erro ao buscar produto');
+        });
+}
+
+// Notificações visuais
+function showSuccessNotification(message) {
+    const notification = createNotification(message, 'success');
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function showErrorNotification(message) {
+    const notification = createNotification(message, 'danger');
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function createNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check' : 'exclamation-triangle'}"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    return notification;
 }
 
 // Adicionar produto ao carrinho
@@ -489,6 +694,197 @@ function changeQuantity(index, change) {
 function removeFromCart(index) {
     cart.splice(index, 1);
     updateCartDisplay();
+}
+
+// Busca de clientes
+function searchCustomers() {
+    const query = document.getElementById('customer-search').value.trim();
+    if (query.length < 2) {
+        hideCustomerSuggestions();
+        return;
+    }
+    
+    fetch(`/sales/api/customers/?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            showCustomerSuggestions(data.customers);
+        })
+        .catch(error => {
+            console.error('Erro na busca de clientes:', error);
+        });
+}
+
+// Exibir sugestões de clientes
+function showCustomerSuggestions(customers) {
+    const container = document.getElementById('customer-suggestions');
+    
+    if (customers.length === 0) {
+        hideCustomerSuggestions();
+        return;
+    }
+    
+    let html = '';
+    customers.forEach(customer => {
+        html += `
+            <div class="suggestion-item p-2 border-bottom" 
+                 style="cursor: pointer;"
+                 onclick="selectCustomer(${customer.id}, '${customer.name}', '${customer.phone}', '${customer.email}')">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong style="color: #212529 !important;">${customer.name}</strong>
+                        ${customer.phone ? `<br><small class="text-muted" style="color: #212529 !important;"><i class="fas fa-phone"></i> ${customer.phone}</small>` : ''}
+                        ${customer.email ? `<br><small class="text-muted" style="color: #212529 !important;"><i class="fas fa-envelope"></i> ${customer.email}</small>` : ''}
+                    </div>
+                    <div>
+                        <i class="fas fa-user-check text-success"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    container.style.display = 'block';
+}
+
+// Esconder sugestões de clientes
+function hideCustomerSuggestions() {
+    document.getElementById('customer-suggestions').style.display = 'none';
+}
+
+// Tratar teclas na busca de cliente
+function handleCustomerSearchKeydown(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const suggestions = document.querySelectorAll('#customer-suggestions .suggestion-item');
+        if (suggestions.length > 0) {
+            suggestions[0].click();
+        }
+    } else if (e.key === 'Escape') {
+        hideCustomerSuggestions();
+        clearSelectedCustomer();
+    }
+}
+
+// Selecionar cliente
+function selectCustomer(id, name, phone, email) {
+    selectedCustomer = { id, name, phone, email };
+    
+    document.getElementById('selected-customer').innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-user text-success"></i>
+                <strong style="color: #212529 !important;">${name}</strong>
+                ${phone ? `<br><small class="text-muted"><i class="fas fa-phone"></i> ${phone}</small>` : ''}
+                ${email ? `<br><small class="text-muted"><i class="fas fa-envelope"></i> ${email}</small>` : ''}
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearSelectedCustomer()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    hideCustomerSuggestions();
+    document.getElementById('customer-search').value = '';
+}
+
+// Limpar cliente selecionado
+function clearSelectedCustomer() {
+    selectedCustomer = null;
+    document.getElementById('selected-customer').innerHTML = `
+        <small><i class="fas fa-user-slash"></i> Cliente avulso</small>
+    `;
+    document.getElementById('customer-search').value = '';
+    hideCustomerSuggestions();
+}
+
+// Mostrar modal de novo cliente
+function showNewCustomerModal() {
+    const modal = new bootstrap.Modal(document.getElementById('newCustomerModal'));
+    modal.show();
+    
+    // Limpar formulário
+    document.getElementById('new-customer-form').reset();
+    
+    // Aplicar máscaras
+    applyInputMasks();
+    
+    // Focar no campo nome
+    setTimeout(() => {
+        document.getElementById('customer-name').focus();
+    }, 500);
+}
+
+// Aplicar máscaras de entrada
+function applyInputMasks() {
+    const phoneInput = document.getElementById('customer-phone');
+    const cpfInput = document.getElementById('customer-cpf');
+    
+    // Máscara de telefone
+    phoneInput.addEventListener('input', function() {
+        let value = this.value.replace(/\D/g, '');
+        value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
+        value = value.replace(/(\d)(\d{4})$/, '$1-$2');
+        this.value = value;
+    });
+    
+    // Máscara de CPF
+    cpfInput.addEventListener('input', function() {
+        let value = this.value.replace(/\D/g, '');
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        this.value = value;
+    });
+}
+
+// Salvar novo cliente
+function saveNewCustomer() {
+    const name = document.getElementById('customer-name').value.trim();
+    if (!name) {
+        alert('Nome é obrigatório');
+        document.getElementById('customer-name').focus();
+        return;
+    }
+    
+    const customerData = {
+        name: name,
+        phone: document.getElementById('customer-phone').value.trim(),
+        email: document.getElementById('customer-email').value.trim(),
+        cpf: document.getElementById('customer-cpf').value.trim()
+    };
+    
+    fetch('/sales/api/customer/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(customerData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Selecionar o novo cliente
+            selectCustomer(
+                data.customer.id,
+                data.customer.name,
+                customerData.phone,
+                customerData.email
+            );
+            
+            // Fechar modal
+            bootstrap.Modal.getInstance(document.getElementById('newCustomerModal')).hide();
+            
+            alert('Cliente cadastrado com sucesso!');
+        } else {
+            alert('Erro ao cadastrar cliente: ' + JSON.stringify(data.errors || data.error));
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao salvar cliente:', error);
+        alert('Erro ao cadastrar cliente. Tente novamente.');
+    });
 }
 
 // Atualizar totais
@@ -667,6 +1063,9 @@ function getCookie(name) {
 document.addEventListener('click', function(e) {
     if (!e.target.closest('#product-search') && !e.target.closest('#product-suggestions')) {
         hideProductSuggestions();
+    }
+    if (!e.target.closest('#customer-search') && !e.target.closest('#customer-suggestions')) {
+        hideCustomerSuggestions();
     }
 });
 </script>

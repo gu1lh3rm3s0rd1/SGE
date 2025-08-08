@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db.models import Q
 from django.core.paginator import Paginator
+from django.views.decorators.http import require_http_methods
+from django.urls import reverse
 
 from .models import Product
 from .forms import ProductForm, ProductSearchForm
@@ -73,6 +75,7 @@ def product_create(request):
         form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
             product = form.save()
+            print(product)
             messages.success(request, f'Produto "{product.title}" criado com sucesso!')
             return redirect('products:product_detail', pk=product.pk)
     else:
@@ -117,3 +120,19 @@ def product_delete(request, pk):
     
     context = {'product': product}
     return render(request, 'products/product_confirm_delete.html', context)
+
+
+@require_http_methods(["GET"])
+def check_barcode_api(request, barcode):
+    """API para verificar se código de barras já existe"""
+    try:
+        product = Product.objects.get(barcode=barcode)
+        return JsonResponse({
+            'exists': True,
+            'product_id': product.id,
+            'product_name': product.title,
+            'edit_url': reverse('products:product_update', args=[product.id]),
+            'detail_url': reverse('products:product_detail', args=[product.id])
+        })
+    except Product.DoesNotExist:
+        return JsonResponse({'exists': False})

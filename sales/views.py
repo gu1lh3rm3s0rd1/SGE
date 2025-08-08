@@ -209,19 +209,26 @@ def customer_search_api(request):
 def add_quick_customer(request):
     """Adicionar cliente rapidamente durante a venda"""
     if request.method == 'POST':
-        form = CustomerQuickForm(request.POST)
-        if form.is_valid():
-            customer = form.save()
-            return JsonResponse({
-                'success': True,
-                'customer': {
-                    'id': customer.id,
-                    'name': customer.name,
-                    'display_name': f"{customer.name} - {customer.phone}"
-                }
-            })
-        else:
-            return JsonResponse({'success': False, 'errors': form.errors})
+        import json
+        try:
+            data = json.loads(request.body)
+            form = CustomerQuickForm(data)
+            if form.is_valid():
+                customer = form.save()
+                return JsonResponse({
+                    'success': True,
+                    'customer': {
+                        'id': customer.id,
+                        'name': customer.name,
+                        'phone': customer.phone or '',
+                        'email': customer.email or '',
+                        'display_name': f"{customer.name} - {customer.phone or 'Sem telefone'}"
+                    }
+                })
+            else:
+                return JsonResponse({'success': False, 'errors': form.errors})
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Dados inválidos'})
     
     return JsonResponse({'success': False, 'error': 'Método não permitido'})
 

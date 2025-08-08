@@ -82,7 +82,7 @@
     </div>
   {% endif %}
 
-  {% if perms.products.view_product %}
+  {% comment %} {% if perms.products.view_product %}
     <div class="row mt-5 justify-content-center">
       <div class="col-md-6 text-center">
         {% if product_count_by_category != '{}' %}
@@ -147,5 +147,5 @@
         });
       </script>
     </div>
-  {% endif %}
+  {% endif %} {% endcomment %}
 {% endblock %}

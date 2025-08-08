@@ -114,12 +114,24 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">{{ form.barcode.label }}</label>
-                                {{ form.barcode }}
+                                <label class="form-label">
+                                    <i class="bi bi-upc-scan me-2"></i>{{ form.barcode.label }}
+                                </label>
+                                <div class="input-group">
+                                    {{ form.barcode }}
+                                    <span class="input-group-text">
+                                        <i class="bi bi-upc-scan text-primary" id="scanner-icon"></i>
+                                    </span>
+                                </div>
                                 {% if form.barcode.errors %}
                                     <div class="text-danger small">{{ form.barcode.errors.0 }}</div>
                                 {% endif %}
-                                <div class="form-text">Código de barras para leitura rápida</div>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Posicione o cursor no campo e escaneie o código de barras
+                                </div>
+                                <!-- Área para feedback do scanner -->
+                                <div id="barcode-feedback"></div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -204,8 +216,183 @@
 
 {% block extra_js %}
 <script>
+// Função de detecção de scanner reutilizada da venda rápida
+function handleBarcodeInput(input, callback) {
+    let barcodeBuffer = '';
+    let lastInputTime = 0;
+    
+    input.addEventListener('input', function(e) {
+        const currentTime = Date.now();
+        const timeDiff = currentTime - lastInputTime;
+        
+        // Se input muito rápido (< 100ms), provavelmente é scanner
+        if (timeDiff < 100 && barcodeBuffer) {
+            barcodeBuffer += e.target.value.slice(-1);
+        } else {
+            barcodeBuffer = e.target.value;
+        }
+        
+        lastInputTime = currentTime;
+        
+        // Detecta final do scan (Enter ou delay > 150ms)
+        setTimeout(() => {
+            if (barcodeBuffer.length >= 8 && currentTime - lastInputTime >= 150) {
+                callback(barcodeBuffer.trim());
+                barcodeBuffer = '';
+            }
+        }, 200);
+    });
+    
+    // Detectar Enter (final do scan)
+    input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && barcodeBuffer.length >= 8) {
+            e.preventDefault();
+            callback(barcodeBuffer.trim());
+            barcodeBuffer = '';
+        }
+    });
+}
+
+function showBarcodeNotification(message, type = 'info', actions = null) {
+    const feedbackDiv = document.getElementById('barcode-feedback');
+    if (!feedbackDiv) return;
+    
+    let actionsHtml = '';
+    if (actions) {
+        actionsHtml = `
+            <div class="mt-2">
+                ${actions.map(action => 
+                    `<a href="${action.url}" class="btn btn-sm ${action.class} me-2">
+                        <i class="${action.icon} me-1"></i>${action.text}
+                    </a>`
+                ).join('')}
+            </div>
+        `;
+    }
+    
+    feedbackDiv.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show mt-2" role="alert">
+            <i class="bi bi-upc-scan me-2"></i>${message}
+            ${actionsHtml}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Auto-remove after 5 seconds if no actions
+    if (!actions) {
+        setTimeout(() => {
+            const alert = feedbackDiv.querySelector('.alert');
+            if (alert) alert.remove();
+        }, 5000);
+    }
+}
+
+function validateBarcodeFormat(barcode) {
+    // Validação básica de formato
+    if (barcode.length < 8) {
+        return { valid: false, message: 'Código muito curto (mínimo 8 caracteres)' };
+    }
+    
+    if (barcode.length > 20) {
+        return { valid: false, message: 'Código muito longo (máximo 20 caracteres)' };
+    }
+    
+    // Verificar se contém apenas números e letras
+    if (!/^[A-Za-z0-9]+$/.test(barcode)) {
+        return { valid: false, message: 'Código deve conter apenas letras e números' };
+    }
+    
+    return { valid: true, message: 'Formato válido' };
+}
+
+function checkBarcodeExists(barcode) {
+    fetch(`/products/api/check-barcode/${barcode}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.exists) {
+                // Produto já existe
+                showBarcodeNotification(
+                    `Código já cadastrado no produto: "${data.product_name}"`,
+                    'warning',
+                    [
+                        {
+                            url: data.detail_url,
+                            class: 'btn-outline-info',
+                            icon: 'bi bi-eye',
+                            text: 'Visualizar'
+                        },
+                        {
+                            url: data.edit_url,
+                            class: 'btn-outline-warning',
+                            icon: 'bi bi-pencil',
+                            text: 'Editar'
+                        }
+                    ]
+                );
+            } else {
+                // Código disponível
+                showBarcodeNotification(
+                    `Código "${barcode}" disponível e válido!`,
+                    'success'
+                );
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao verificar código:', error);
+            showBarcodeNotification(
+                'Erro ao verificar código. Tente novamente.',
+                'danger'
+            );
+        });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Calcular margem de lucro em tempo real
+    // Scanner no campo barcode
+    const barcodeInput = document.getElementById('id_barcode');
+    
+    if (barcodeInput) {
+        // Configurar placeholder e autocomplete
+        barcodeInput.placeholder = 'Digite ou escaneie o código de barras';
+        barcodeInput.autocomplete = 'off';
+        
+        // Aplicar detecção de scanner
+        handleBarcodeInput(barcodeInput, function(barcode) {
+            // Validar formato
+            const validation = validateBarcodeFormat(barcode);
+            
+            if (!validation.valid) {
+                showBarcodeNotification(validation.message, 'danger');
+                barcodeInput.value = '';
+                barcodeInput.focus();
+                return;
+            }
+            
+            // Verificar se já existe
+            checkBarcodeExists(barcode);
+            
+            // Feedback visual no ícone
+            const scannerIcon = document.getElementById('scanner-icon');
+            if (scannerIcon) {
+                scannerIcon.className = 'bi bi-check-circle text-success';
+                setTimeout(() => {
+                    scannerIcon.className = 'bi bi-upc-scan text-primary';
+                }, 2000);
+            }
+        });
+        
+        // Validação ao perder foco (para entrada manual)
+        barcodeInput.addEventListener('blur', function() {
+            const barcode = this.value.trim();
+            if (barcode && barcode.length >= 8) {
+                const validation = validateBarcodeFormat(barcode);
+                if (validation.valid) {
+                    checkBarcodeExists(barcode);
+                }
+            }
+        });
+    }
+    
+    // Calcular margem de lucro em tempo real (código existente)
     const costPrice = document.getElementById('id_cost_price');
     const sellingPrice = document.getElementById('id_selling_price');
     

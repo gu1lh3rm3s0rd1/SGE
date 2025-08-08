@@ -81,10 +81,22 @@
           </li>
           <li>
             <a href="{% url 'reporting:dashboard' %}" class="nav-link px-0 align-middle">
-              <i class="bi bi-graph-up fs-4 text-info"></i>
+              <i class="bi bi-graph-up fs-4"></i>
               <span class="ms-1">Relatórios</span>
             </a>
           </li>
+          
+          <!-- Divisor -->
+          <li><hr class="text-white my-2"></li>
+          
+          <!-- Manual de Operação -->
+          <li>
+            <a href="{% url 'manual_operacao' %}" class="nav-link px-0 align-middle text-warning">
+              <i class="bi bi-book fs-4"></i>
+              <span class="ms-1">📚 Manual</span>
+            </a>
+          </li>
+          
           <li class="nav-item">
             {% if user.is_authenticated %}
             <form action="{% url 'logout' %}" method="post" id="logout-form" class="nav-link px-0 align-middle">

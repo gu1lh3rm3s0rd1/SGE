@@ -128,7 +128,7 @@
                                 </div>
                             </div>
                             <small class="text-muted">
-                                Lucro: R$ {% widthratio product.selling_price 1 1 as selling %}{% widthratio product.cost_price 1 1 as cost %}{{ selling|add:cost|mul:-1|floatformat:2 }}
+                                <span id="profit-display">Calculando lucro...</span>
                             </small>
                         {% endwith %}
                     </div>
@@ -169,4 +169,24 @@
         {% endif %}
     </small>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calcular e exibir o lucro
+    const sellingPrice = parseFloat('{{ product.selling_price }}');
+    const costPrice = parseFloat('{{ product.cost_price }}');
+    const profit = sellingPrice - costPrice;
+    const profitDisplay = document.getElementById('profit-display');
+    
+    if (profitDisplay) {
+        if (profit >= 0) {
+            profitDisplay.innerHTML = `Lucro: R$ ${profit.toFixed(2)}`;
+            profitDisplay.className = 'text-success';
+        } else {
+            profitDisplay.innerHTML = `Prejuízo: R$ ${Math.abs(profit).toFixed(2)}`;
+            profitDisplay.className = 'text-danger';
+        }
+    }
+});
+</script>
 {% endblock %}

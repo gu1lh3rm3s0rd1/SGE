@@ -96,26 +96,26 @@
         <!-- Informações da Venda -->
         <div class="col-md-4">
             <div class="info-card">
-                <h5 class="mb-3">
+                <h5 class="mb-3" style="color: #212529 !important;">
                     <i class="fas fa-info-circle text-primary"></i>
                     Informações da Venda
                 </h5>
                 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Cliente:</label>
+                    <label class="form-label fw-bold" style="color: #212529 !important;">Cliente:</label>
                     <div>
                         {% if sale.customer %}
                             <i class="fas fa-user text-info"></i>
                             {{ sale.customer.name }}
                             {% if sale.customer.phone %}
                                 <br>
-                                <small class="text-muted">
+                                <small class="text-muted" style="color: #212529 !important;">
                                     <i class="fas fa-phone"></i>
                                     {{ sale.customer.phone }}
                                 </small>
                             {% endif %}
                         {% else %}
-                            <span class="text-muted">
+                            <span class="text-muted" style="color: #212529 !important;">
                                 <i class="fas fa-user-slash"></i>
                                 Cliente avulso
                             </span>
@@ -124,8 +124,8 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Vendedor:</label>
-                    <div>
+                    <label class="form-label fw-bold" style="color: #212529 !important;">Vendedor:</label>
+                    <div style="color: #212529 !important;">
                         <i class="fas fa-user-tie text-success"></i>
                         {% if sale.seller.first_name %}
                             {{ sale.seller.first_name }} {{ sale.seller.last_name }}
@@ -136,7 +136,7 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Forma de Pagamento:</label>
+                    <label class="form-label fw-bold" style="color: #212529 !important;">Forma de Pagamento:</label>
                     <div>
                         <span class="payment-badge badge 
                             {% if sale.payment_method == 'cash' %}bg-success
@@ -183,17 +183,17 @@
         <!-- Itens da Venda -->
         <div class="col-md-8">
             <div class="info-card">
-                <h5 class="mb-3">
+                <h5 class="mb-3" style="color: #212529 !important;">
                     <i class="fas fa-shopping-cart text-primary"></i>
                     Itens da Venda ({{ items|length }} item{{ items|length|pluralize }})
                 </h5>
                 
                 {% for item in items %}
-                <div class="item-row">
+                <div class="item-row" style="color: #212529 !important;">
                     <div class="row align-items-center">
                         <div class="col-md-6">
                             <h6 class="mb-1">{{ item.product.title }}</h6>
-                            <div class="text-muted">
+                            <div class="text-muted" style="color: #212529 !important;">
                                 {% if item.product.brand %}
                                     <span class="badge bg-light text-dark me-1">{{ item.product.brand.name }}</span>
                                 {% endif %}
@@ -205,22 +205,22 @@
                                 {% endif %}
                             </div>
                             {% if item.product.sku %}
-                                <small class="text-muted d-block mt-1">
+                                <small class="text-muted d-block mt-1" style="color: #212529 !important;">
                                     SKU: {{ item.product.sku }}
                                 </small>
                             {% endif %}
                         </div>
                         <div class="col-md-2 text-center">
                             <div class="fw-bold">{{ item.quantity }}</div>
-                            <small class="text-muted">unidade{{ item.quantity|pluralize }}</small>
+                            <small class="text-muted" style="color: #212529 !important;">unidade{{ item.quantity|pluralize }}</small>
                         </div>
                         <div class="col-md-2 text-center">
                             <div class="fw-bold">R$ {{ item.unit_price|floatformat:2 }}</div>
-                            <small class="text-muted">unitário</small>
+                            <small class="text-muted" style="color: #212529 !important;">unitário</small>
                         </div>
                         <div class="col-md-2 text-end">
                             <div class="fw-bold text-success">R$ {{ item.total_price|floatformat:2 }}</div>
-                            <small class="text-muted">total</small>
+                            <small class="text-muted" style="color: #212529 !important;">total</small>
                         </div>
                     </div>
                 </div>

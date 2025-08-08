@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Estilos customizados para o manual */
+.manual-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.manual-content h1 {
+    color: #2c5282;
+    text-align: center;
+    border-bottom: 3px solid #4299e1;
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+}
+
+.manual-content h2 {
+    color: #2d3748;
+    background: linear-gradient(135deg, #4299e1, #3182ce);
+    color: white;
+    padding: 1rem;
+    border-radius: 10px;
+    margin: 2rem 0 1rem 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.manual-content h3 {
+    color: #2b6cb0;
+    border-left: 5px solid #4299e1;
+    padding-left: 1rem;
+    margin: 1.5rem 0 1rem 0;
+    font-weight: 600;
+}
+
+.manual-content h4 {
+    color: #2c5282;
+    margin: 1rem 0 0.5rem 0;
+}
+
+.manual-content p {
+    margin-bottom: 1rem;
+    text-align: justify;
+}
+
+.manual-content ul, .manual-content ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+}
+
+.manual-content li {
+    margin-bottom: 0.5rem;
+}
+
+.manual-content strong {
+    color: #2d3748;
+    font-weight: 600;
+}
+
+.manual-content em {
+    color: #4a5568;
+    font-style: italic;
+}
+
+.manual-content code {
+    background-color: #f7fafc;
+    color: #2d3748;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    border: 1px solid #e2e8f0;
+}
+
+.manual-content pre {
+    background-color: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.manual-content hr {
+    border: none;
+    height: 3px;
+    background: linear-gradient(90deg, #4299e1, #3182ce, #4299e1);
+    margin: 2rem 0;
+    border-radius: 2px;
+}
+
+.manual-content blockquote {
+    border-left: 4px solid #4299e1;
+    background-color: #f7fafc;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+}
+
+/* Estilo para emoji e ícones */
+.manual-content h2:before {
+    margin-right: 0.5rem;
+}
+
+/* Botões de ação */
+.manual-actions {
+    background: white;
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    border: 1px solid #e2e8f0;
+}
+
+/* Destaque para seções importantes */
+.manual-content h2:contains("PROBLEMAS"),
+.manual-content h2:contains("DICAS"),
+.manual-content h2:contains("FLUXO") {
+    background: linear-gradient(135deg, #f6ad55, #ed8936);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .manual-content {
+        font-size: 1rem;
+        padding: 0 1rem;
+    }
+    
+    .manual-content h2 {
+        padding: 0.8rem;
+        font-size: 1.3rem;
+    }
+    
+    .manual-content h3 {
+        font-size: 1.2rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .sidebar, .navbar, .manual-actions {
+        display: none !important;
+    }
+    
+    .manual-content {
+        max-width: none;
+        font-size: 12pt;
+        line-height: 1.5;
+    }
+    
+    .manual-content h2 {
+        background: none !important;
+        color: #000 !important;
+        border: 2px solid #000;
+        page-break-after: avoid;
+    }
+    
+    .manual-content h3 {
+        page-break-after: avoid;
+    }
+}
+
+/* Animações suaves */
+.manual-content {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Destaque para elementos importantes */
+.manual-content strong:contains("PASSO"),
+.manual-content strong:contains("ATENÇÃO"),
+.manual-content strong:contains("IMPORTANTE") {
+    background-color: #fed7d7;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    color: #c53030;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="manual-actions">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <h4 class="mb-0">
+                    <i class="fas fa-book text-primary me-2"></i>
+                    Manual de Operação do Sistema SGE
+                </h4>
+                <p class="text-muted mb-0">Guia completo para operar vendas e estoque</p>
+            </div>
+            <div class="btn-group" role="group">
+                <button onclick="window.print()" class="btn btn-outline-primary">
+                    <i class="fas fa-print me-2"></i>Imprimir Manual
+                </button>
+                <button onclick="scrollToTop()" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-up me-2"></i>Voltar ao Topo
+                </button>
+                <a href="{% url 'home' %}" class="btn btn-primary">
+                    <i class="fas fa-home me-2"></i>Voltar ao Sistema
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="manual-content">
+        {{ manual_html|safe }}
+    </div>
+
+    <!-- Botão flutuante para voltar ao topo -->
+    <button id="backToTop" class="btn btn-primary position-fixed" 
+            style="bottom: 20px; right: 20px; z-index: 1000; border-radius: 50%; display: none;"
+            onclick="scrollToTop()">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Função para voltar ao topo
+function scrollToTop() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+
+// Mostrar/ocultar botão de voltar ao topo
+window.addEventListener('scroll', function() {
+    const backToTopButton = document.getElementById('backToTop');
+    if (window.pageYOffset > 300) {
+        backToTopButton.style.display = 'block';
+    } else {
+        backToTopButton.style.display = 'none';
+    }
+});
+
+// Smooth scroll para links internos
+document.addEventListener('DOMContentLoaded', function() {
+    // Adicionar ícones aos títulos baseado no conteúdo
+    const h2Elements = document.querySelectorAll('.manual-content h2');
+    h2Elements.forEach(h2 => {
+        const text = h2.textContent.toLowerCase();
+        let icon = '';
+        
+        if (text.includes('venda')) icon = '🛒';
+        else if (text.includes('estoque') || text.includes('mercadoria')) icon = '📦';
+        else if (text.includes('produto')) icon = '🏷️';
+        else if (text.includes('código') || text.includes('scanner')) icon = '🔧';
+        else if (text.includes('problema')) icon = '🚨';
+        else if (text.includes('dica')) icon = '🏆';
+        else if (text.includes('fluxo')) icon = '🎯';
+        else if (text.includes('ajuda')) icon = '🆘';
+        else if (text.includes('parabéns')) icon = '🎉';
+        
+        if (icon) {
+            h2.innerHTML = icon + ' ' + h2.innerHTML;
+        }
+    });
+
+    // Adicionar numeração aos passos
+    const stepHeaders = document.querySelectorAll('.manual-content h3');
+    stepHeaders.forEach(h3 => {
+        if (h3.textContent.includes('PASSO')) {
+            h3.style.backgroundColor = '#e6f3ff';
+            h3.style.padding = '0.8rem';
+            h3.style.borderRadius = '8px';
+            h3.style.border = '2px solid #4299e1';
+        }
+    });
+
+    // Highlight de elementos importantes
+    const strongElements = document.querySelectorAll('.manual-content strong');
+    strongElements.forEach(strong => {
+        const text = strong.textContent.toLowerCase();
+        if (text.includes('atenção') || text.includes('importante') || text.includes('cuidado')) {
+            strong.style.backgroundColor = '#fed7d7';
+            strong.style.color = '#c53030';
+            strong.style.padding = '0.2rem 0.4rem';
+            strong.style.borderRadius = '4px';
+        }
+    });
+
+    console.log('Manual de Operação carregado com sucesso! 📚');
+});
+
+// Adicionar funcionalidade de busca rápida
+function adicionarBuscaRapida() {
+    const searchHTML = `
+        <div class="manual-search mb-3">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" class="form-control" id="manual-search" 
+                       placeholder="Buscar no manual... (ex: 'venda', 'scanner', 'código')">
+            </div>
+        </div>
+    `;
+    
+    document.querySelector('.manual-content').insertAdjacentHTML('afterbegin', searchHTML);
+    
+    // Funcionalidade de busca
+    document.getElementById('manual-search').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const content = document.querySelector('.manual-content');
+        const text = content.innerHTML;
+        
+        if (searchTerm.length > 2) {
+            const regex = new RegExp(`(${searchTerm})`, 'gi');
+            const highlightedText = text.replace(regex, '<mark>$1</mark>');
+            content.innerHTML = highlightedText;
+        } else {
+            // Remover highlights
+            content.innerHTML = text.replace(/<mark>/g, '').replace(/<\/mark>/g, '');
+        }
+    });
+}
+
+// Adicionar busca após carregar
+setTimeout(adicionarBuscaRapida, 1000);
+</script>
+{% endblock %}
