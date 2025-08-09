@@ -58,7 +58,7 @@
 }
 
 .manual-content strong {
-    color: #2d3748;
+    {% comment %} color: #2d3748; {% endcomment %}
     font-weight: 600;
 }
 
@@ -192,17 +192,17 @@
     <div class="manual-actions">
         <div class="d-flex justify-content-between align-items-center flex-wrap">
             <div>
-                <h4 class="mb-0">
+                <h4 class="mb-0" style="color: #212529 !important;">
                     <i class="fas fa-book text-primary me-2"></i>
                     Manual de Operação do Sistema SGE
                 </h4>
-                <p class="text-muted mb-0">Guia completo para operar vendas e estoque</p>
+                <p class="text-muted mb-0" style="color: #212529 !important;">Guia completo para operar vendas e estoque</p>
             </div>
             <div class="btn-group" role="group">
                 <button onclick="window.print()" class="btn btn-outline-primary">
                     <i class="fas fa-print me-2"></i>Imprimir Manual
                 </button>
-                <button onclick="scrollToTop()" class="btn btn-outline-secondary">
+                <button onclick="scrollToTop()" class="btn btn-outline-secondary" style="color: #212529 !important;">
                     <i class="fas fa-arrow-up me-2"></i>Voltar ao Topo
                 </button>
                 <a href="{% url 'home' %}" class="btn btn-primary">
